@@ -9,6 +9,7 @@ import sys
 import networkx as nx
 import matplotlib.pyplot as plt
 from matplotlib import use as mpl_use
+from ortools.linear_solver import pywraplp
 
 mpl_use('TkAgg', force=True)
 
@@ -30,9 +31,9 @@ def main():
     # b_value = (input("b value (default = '3'): ") or 3)
 
     # Temporal non-interactive version
-    file_path = Path("./data/graph1.txt")
-    k_value = 3
-    b_value = 3
+    file_path = Path("./data/graph2.txt")
+    k_value = 4
+    b_value = 9
 
     with open(file_path, "r", encoding="utf-8-sig") as file:
         raw_data = file.read()
@@ -86,35 +87,101 @@ def cvsp(graph: nx.Graph, k_value: int, b_value: int) -> dict[str, list]:
     """ Function to solve the Capacitated Vertex Separator Problem on the given
     graph. """
 
-    # Solution to graph 1
-    solution = {
-        "S": ["v8", "v9"],
-        "V": [
-            ["v1", "v2", "v7"],
-            ["v5", "v6", "v10"],
-            ["v3", "v4"],
-        ]
-    }
+    K = range(k_value)
+    V = graph.nodes()
+    E = graph.edges()
 
-    return solution
+    # Create the mip solver with the SCIP backend.
+    solver = pywraplp.Solver.CreateSolver("SCIP")
+    # solver = pywraplp.Solver.CreateSolver("BOP")
+    assert isinstance(solver, pywraplp.Solver)
+
+    # Create the integer binary variables ("1e" constraints).
+    e = []
+    for i in K:
+        shore_i = {}
+        for v in V:
+            shore_i.update({v: solver.IntVar(0, 1, v)})
+        e.append(shore_i)
+
+    # Add the formulation constraints.
+    constraints = []
+
+    # "1b" constraints.
+    for v in V:
+        constraint = solver.Constraint(-solver.infinity(), 1)
+        assert isinstance(constraint, pywraplp.Constraint)
+        for i in K:
+            constraint.SetCoefficient(e[i][v], 1)
+        constraints.append(constraint)
+
+    # "1c" constraints.
+    for i in K:
+        for w, v in E:
+            constraint = solver.Constraint(-solver.infinity(), 1)
+            assert isinstance(constraint, pywraplp.Constraint)
+            constraint.SetCoefficient(e[i][w], 1)
+            for j in K:
+                if i != j:
+                    constraint.SetCoefficient(e[j][v], 1)
+            constraints.append(constraint)
+
+    # "1d" constraints.
+    for i in K:
+        constraint = solver.Constraint(-solver.infinity(), b_value)
+        assert isinstance(constraint, pywraplp.Constraint)
+        for v in V:
+            constraint.SetCoefficient(e[i][v], 1)
+        constraints.append(constraint)
+
+    print("\nProblem definition:")
+    print("  Number of variables =", solver.NumVariables())
+    print("  Number of constraints =", solver.NumConstraints())
+
+    # Add the "1a" objective function
+    objective = solver.Objective()
+    assert isinstance(objective, pywraplp.Objective)
+    for i in K:
+        for v in V:
+            objective.SetCoefficient(e[i][v], 1)
+    objective.SetMaximization()
+
+    # Solve the system.
+    status = solver.Solve()
+
+    print("\nAdvanced usage:")
+    print(f"  Problem solved in {solver.wall_time()} milliseconds")
+    print(f"  Problem solved in {solver.iterations()} iterations")
+    print(f"  Problem solved in {solver.nodes()} branch-and-bound nodes")
+
+    # Print and Parse the solution found.
+    if status == pywraplp.Solver.OPTIMAL:
+        solution = {"S": [], "V": [[] for _ in K]}
+        for v in V:
+
+            n_shores = 0  # ToDo: Change variable name
+            for i in K:
+
+                int_var = e[i][v]
+                assert isinstance(int_var, pywraplp.Variable)
+
+                if int_var.solution_value() == 1:
+                    solution["V"][i].append(int_var.name())
+                    n_shores += 1
+
+            if n_shores == 0:
+                solution["S"].append(int_var.name())
+
+        return solution
+
+    print("The problem does not have an optimal solution.")
+    return None
 
 
 def draw_solution(graph: nx.Graph, solution: dict[str, list]):
     """ Function to draw the graph's solution. """
 
-    # Graph1's positions
-    n_pos_dict = {
-        "v1": (10, 15),
-        "v2": (15, 15),
-        "v3": (20, 15),
-        "v4": (25, 15),
-        "v5": (30, 15),
-        "v6": (35, 15),
-        "v7": (15, 10),
-        "v8": (20, 10),
-        "v9": (25, 10),
-        "v10": (30, 10),
-    }
+    n_pos_dict = nx.drawing.layout.kamada_kawai_layout(graph)
 
     nx.draw_networkx(graph,
                      n_pos_dict,
