@@ -105,46 +105,25 @@ def cvsp(graph: nx.Graph, k_value: int, b_value: int) -> dict[str, list]:
         e.append(shore_i)
 
     # Add the formulation constraints.
-    constraints = []
-
     # "1b" constraints.
     for v in V:
-        constraint = solver.Constraint(-solver.infinity(), 1)
-        assert isinstance(constraint, pywraplp.Constraint)
-        for i in K:
-            constraint.SetCoefficient(e[i][v], 1)
-        constraints.append(constraint)
+        solver.Add(sum(e[i][v] for i in K) <= 1)
 
     # "1c" constraints.
     for i in K:
         for w, v in E:
-            constraint = solver.Constraint(-solver.infinity(), 1)
-            assert isinstance(constraint, pywraplp.Constraint)
-            constraint.SetCoefficient(e[i][w], 1)
-            for j in K:
-                if i != j:
-                    constraint.SetCoefficient(e[j][v], 1)
-            constraints.append(constraint)
+            solver.Add(e[i][w] + sum(e[j][v] for j in K if i != j) <= 1)
 
     # "1d" constraints.
     for i in K:
-        constraint = solver.Constraint(-solver.infinity(), b_value)
-        assert isinstance(constraint, pywraplp.Constraint)
-        for v in V:
-            constraint.SetCoefficient(e[i][v], 1)
-        constraints.append(constraint)
+        solver.Add(sum(e[i][v] for v in V) <= b_value)
 
     print("\nProblem definition:")
     print("  Number of variables =", solver.NumVariables())
     print("  Number of constraints =", solver.NumConstraints())
 
     # Add the "1a" objective function
-    objective = solver.Objective()
-    assert isinstance(objective, pywraplp.Objective)
-    for i in K:
-        for v in V:
-            objective.SetCoefficient(e[i][v], 1)
-    objective.SetMaximization()
+    solver.Maximize(sum(e[i][v] for i in K for v in V))
 
     # Solve the system.
     status = solver.Solve()
@@ -159,7 +138,7 @@ def cvsp(graph: nx.Graph, k_value: int, b_value: int) -> dict[str, list]:
         solution = {"S": [], "V": [[] for _ in K]}
         for v in V:
 
-            n_shores = 0  # ToDo: Change variable name
+            n_shores = 0
             for i in K:
 
                 int_var = e[i][v]
