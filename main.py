@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 """ This program calculates the optimal solution to the Capacitated Vertex
-Separator Problem (CVSP) on a graph through unilevel and bilevel aproaches. """
+Separator Problem (CVSP) on a graph through unilevel and bilevel approaches."""
 
 from pathlib import Path
 import sys
@@ -87,13 +87,22 @@ def cvsp(graph: nx.Graph, k_value: int, b_value: int) -> dict[str, list]:
     """ Function to solve the Capacitated Vertex Separator Problem on the given
     graph. """
 
+    # solution = formulation_1(graph, k_value, b_value)
+    solution = formulation_2(graph, k_value, b_value)
+
+    return solution
+
+
+def formulation_1(graph: nx.Graph, k_value: int,
+                  b_value: int) -> dict[str, list]:
+    """ First formulation of an unilevel approach. """
+
     K = range(k_value)
     V = graph.nodes()
     E = graph.edges()
 
     # Create the mip solver with the SCIP backend.
     solver = pywraplp.Solver.CreateSolver("SCIP")
-    # solver = pywraplp.Solver.CreateSolver("BOP")
     assert isinstance(solver, pywraplp.Solver)
 
     # Create the integer binary variables ("1e" constraints).
@@ -101,7 +110,7 @@ def cvsp(graph: nx.Graph, k_value: int, b_value: int) -> dict[str, list]:
     for i in K:
         shore_i = {}
         for v in V:
-            shore_i.update({v: solver.IntVar(0, 1, v)})
+            shore_i.update({v: solver.IntVar(0, 1, f"ξ_{i}_{v}")})
         e.append(shore_i)
 
     # Add the formulation constraints.
@@ -136,20 +145,101 @@ def cvsp(graph: nx.Graph, k_value: int, b_value: int) -> dict[str, list]:
     # Print and Parse the solution found.
     if status == pywraplp.Solver.OPTIMAL:
         solution = {"S": [], "V": [[] for _ in K]}
+
         for v in V:
-
             n_shores = 0
-            for i in K:
 
+            for i in K:
                 int_var = e[i][v]
                 assert isinstance(int_var, pywraplp.Variable)
 
                 if int_var.solution_value() == 1:
-                    solution["V"][i].append(int_var.name())
+                    solution["V"][i].append(v)
                     n_shores += 1
 
             if n_shores == 0:
-                solution["S"].append(int_var.name())
+                solution["S"].append(v)
+
+        return solution
+
+    print("The problem does not have an optimal solution.")
+    return None
+
+
+def formulation_2(graph: nx.Graph, k_value: int,
+                  b_value: int) -> dict[str, list]:
+    """ Second formulation of an unilevel approach. """
+
+    K = range(k_value)
+    V = graph.nodes()
+    Q = list(nx.find_cliques(graph))
+
+    # Create the mip solver with the SCIP backend.
+    solver = pywraplp.Solver.CreateSolver("SCIP")
+    assert isinstance(solver, pywraplp.Solver)
+
+    # Create the integer binary variables ("1e" constraints).
+    e = []
+    for i in K:
+        shore_i = {}
+        for v in V:
+            shore_i.update({v: solver.IntVar(0, 1, f"ξ_{i}_{v}")})
+        e.append(shore_i)
+
+    y = []
+    for i in K:
+        shore_i = {}
+        for q in Q:
+            shore_i.update({f"{q}": solver.IntVar(0, 1, f"ψ_{i}_{q}")})
+        y.append(shore_i)
+
+    # Add the formulation constraints.
+    # "1b" constraints.
+    for q in Q:
+        solver.Add(sum(y[i][f"{q}"] for i in K) <= 1)
+
+    # "1c" constraints.
+    for i in K:
+        for q in Q:
+            for v in q:
+                solver.Add(e[i][v] - y[i][f"{q}"] <= 0)
+
+    # "1d" constraints.
+    for i in K:
+        solver.Add(sum(e[i][v] for v in V) <= b_value)
+
+    print("\nProblem definition:")
+    print("  Number of variables =", solver.NumVariables())
+    print("  Number of constraints =", solver.NumConstraints())
+
+    # Add the "1a" objective function
+    solver.Maximize(sum(e[i][v] for i in K for v in V))
+
+    # Solve the system.
+    status = solver.Solve()
+
+    print("\nAdvanced usage:")
+    print(f"  Problem solved in {solver.wall_time()} milliseconds")
+    print(f"  Problem solved in {solver.iterations()} iterations")
+    print(f"  Problem solved in {solver.nodes()} branch-and-bound nodes")
+
+    # Print and Parse the solution found.
+    if status == pywraplp.Solver.OPTIMAL:
+        solution = {"S": [], "V": [[] for _ in K]}
+
+        for v in V:
+            n_shores = 0
+
+            for i in K:
+                int_var = e[i][v]
+                assert isinstance(int_var, pywraplp.Variable)
+
+                if int_var.solution_value() == 1:
+                    solution["V"][i].append(v)
+                    n_shores += 1
+
+            if n_shores == 0:
+                solution["S"].append(v)
 
         return solution
 
