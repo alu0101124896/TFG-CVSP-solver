@@ -44,7 +44,8 @@ def main():
 
         solution = cvsp(graph, k_value, b_value)
 
-        draw_solution(graph, solution)
+        if solution is not None:
+            draw_solution(graph, solution)
 
 
 def parse_data(raw_data: str) -> tuple[int, int, bool, list[list[str]]]:
@@ -84,19 +85,21 @@ def build_graph(n_nodes: int, n_edges: int, is_directed: bool,
     return graph
 
 
-def cvsp(graph: nx.Graph, k_value: int, b_value: int) -> dict[str, list]:
+def cvsp(graph: nx.Graph, k_value: int,
+         b_value: int) -> (dict[str, list] | None):
     """ Function to solve the Capacitated Vertex Separator Problem on the given
     graph. """
 
     # solution = formulation_1(graph, k_value, b_value)
     # solution = formulation_2(graph, k_value, b_value)
-    solution = formulation_3(graph, k_value, b_value)
+    # solution = formulation_3(graph, k_value, b_value)
+    solution = formulation_4(graph, k_value, b_value)
 
     return solution
 
 
 def formulation_1(graph: nx.Graph, k_value: int,
-                  b_value: int) -> dict[str, list]:
+                  b_value: int) -> (dict[str, list] | None):
     """ First formulation of an unilevel approach. """
 
     K = range(k_value)
@@ -169,7 +172,7 @@ def formulation_1(graph: nx.Graph, k_value: int,
 
 
 def formulation_2(graph: nx.Graph, k_value: int,
-                  b_value: int) -> dict[str, list]:
+                  b_value: int) -> (dict[str, list] | None):
     """ Second formulation of an unilevel approach. """
 
     K = range(k_value)
@@ -249,7 +252,8 @@ def formulation_2(graph: nx.Graph, k_value: int,
     return None
 
 
-def formulation_3(graph: nx.Graph, k_value: int, b_value: int) -> list[str]:
+def formulation_3(graph: nx.Graph, k_value: int,
+                  b_value: int) -> (list[str] | None):
     """ Third formulation for an unilevel approach. """
 
     V = graph.nodes()
@@ -277,6 +281,62 @@ def formulation_3(graph: nx.Graph, k_value: int, b_value: int) -> list[str]:
 
         if ow > k_value:
             solver.Add(sum(x[v] for v in w) >= 1)
+
+    print("\nProblem definition:")
+    print("  Number of variables =", solver.NumVariables())
+    print("  Number of constraints =", solver.NumConstraints())
+
+    # Add the "3a" objective function
+    solver.Minimize(sum(x[v] for v in V))
+
+    # Solve the system.
+    status = solver.Solve()
+
+    print("\nAdvanced usage:")
+    print(f"  Problem solved in {solver.wall_time()} milliseconds")
+    print(f"  Problem solved in {solver.iterations()} iterations")
+    print(f"  Problem solved in {solver.nodes()} branch-and-bound nodes")
+
+    # Print and Parse the solution found.
+    if status == pywraplp.Solver.OPTIMAL:
+        solution = []
+
+        for v in V:
+            int_var = x[v]
+            assert isinstance(int_var, pywraplp.Variable)
+
+            if int_var.solution_value() == 1:
+                solution.append(v)
+
+        return solution
+
+    print("The problem does not have an optimal solution.")
+    return None
+
+
+def formulation_4(graph: nx.Graph, k_value: int,
+                  b_value: int) -> (list[str] | None):
+    """ Fourth formulation for an unilevel approach. """
+
+    V = graph.nodes()
+
+    # Create the mip solver with the SCIP backend.
+    solver = pywraplp.Solver.CreateSolver("SCIP")
+    assert isinstance(solver, pywraplp.Solver)
+
+    # Create the integer binary variables ("3c" constraints).
+    x = {}
+    for v in V:
+        x.update({v: solver.IntVar(0, 1, f"{v}")})
+
+    # Add the "3b" constraints.
+    W = subsets(list(V))
+    for w in W:
+        gw = graph.subgraph(w)
+
+        for C in nx.connected_components(gw):
+            if len(C) == b_value + 1:
+                solver.Add(sum(x[v] for v in C) >= 1)
 
     print("\nProblem definition:")
     print("  Number of variables =", solver.NumVariables())
