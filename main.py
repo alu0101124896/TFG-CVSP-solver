@@ -3,6 +3,8 @@
 """ This program calculates the optimal solution to the Capacitated Vertex
 Separator Problem (CVSP) on a graph through unilevel and bilevel approaches."""
 
+import argparse
+import json
 from math import inf
 from pathlib import Path
 import sys
@@ -24,28 +26,102 @@ COLORS = [
 
 
 def main():
+    """ Entry point to parse the cli arguments for the main program. """
+
+    # Initialize parser
+    parser = argparse.ArgumentParser(description="Test program")
+
+    # Adding optional argument
+    parser.add_argument("-i",
+                        "--input-file",
+                        help="import graph's definition from INPUT_FILE")
+    parser.add_argument("-o",
+                        "--output-file",
+                        help="export the solution to OUTPUT_FILE")
+
+    parser.add_argument("-k",
+                        "--k-value",
+                        default=None,
+                        help="min number of remaining shores")
+    parser.add_argument("-b",
+                        "--b-value",
+                        default=None,
+                        help="max number of nodes on the remaining shores")
+    parser.add_argument("-f",
+                        "--formulation",
+                        default=1,
+                        help="select a formulation to use")
+
+    parser.add_argument("--no-gui",
+                        action="store_true",
+                        help="do NOT output the solution graphicaly")
+    parser.add_argument("-q",
+                        "--quiet",
+                        action="store_true",
+                        help="suppress all normal output")
+
+    # Read arguments from command line
+    args = parser.parse_args()
+
+    if args.input_file:
+        args.input_file = Path(args.input_file)
+    if args.output_file:
+        args.output_file = Path(args.output_file)
+    if args.k_value:
+        args.k_value = int(args.k_value)
+    if args.b_value:
+        args.b_value = int(args.b_value)
+    if args.formulation:
+        args.formulation = int(args.formulation)
+
+    cvsp(
+        args.input_file,
+        args.output_file,
+        args.k_value,
+        args.b_value,
+        args.formulation,
+        args.no_gui,
+        args.quiet,
+    )
+
+
+def cvsp(input_file: Path = None,
+         output_file: Path = None,
+         k_value: int = None,
+         b_value: int = None,
+         formulation_index: int = 1,
+         no_gui: bool = False,
+         quiet: bool = False):
     """ Main function to start the execution of the program. """
 
-    # file_path = (input("File path (default = './data/graph1.txt'): ")
-    #              or Path("./data/graph1.txt"))
-    # k_value = (input("k value (default = '3'): ") or 3)
-    # b_value = (input("b value (default = '3'): ") or 3)
+    if input_file is None:
+        input_file = (input("File path (default = './data/graph1.txt'): ")
+                      or Path("./data/graph1.txt"))
 
-    # Temporal non-interactive version
-    file_path = Path("./data/graph1.txt")
-    k_value = 3
-    b_value = 3
+    if k_value is None:
+        k_value = (input("k value (default = '3'): ") or 3)
 
-    with open(file_path, "r", encoding="utf-8-sig") as file:
-        raw_data = file.read()
+    if b_value is None:
+        b_value = (input("b value (default = '3'): ") or 3)
+
+    with open(input_file, 'r', encoding="utf-8-sig") as infile:
+        raw_data = infile.read()
         n_nodes, n_edges, is_directed, edges_data = parse_data(raw_data)
 
         graph = build_graph(n_nodes, n_edges, is_directed, edges_data)
 
-        solution = cvsp(graph, k_value, b_value)
+        solution = cvsp_solver(graph, k_value, b_value, formulation_index,
+                               quiet)
 
         if solution is not None:
-            draw_solution(graph, solution)
+            if not no_gui:
+                draw_solution(graph, solution)
+            elif not quiet:
+                print_solution(solution)
+
+            if output_file is not None:
+                with open(output_file, 'w', encoding="utf-8-sig") as outfile:
+                    print(json.dumps(solution), file=outfile)
 
 
 def parse_data(raw_data: str) -> tuple[int, int, bool, list[list[str]]]:
@@ -85,21 +161,34 @@ def build_graph(n_nodes: int, n_edges: int, is_directed: bool,
     return graph
 
 
-def cvsp(graph: nx.Graph, k_value: int,
-         b_value: int) -> (dict[str, list] | None):
+def cvsp_solver(graph: nx.Graph,
+                k_value: int,
+                b_value: int,
+                formulation_index: int = 1,
+                quiet: bool = False) -> (dict[str, list] | None):
     """ Function to solve the Capacitated Vertex Separator Problem on the given
     graph. """
 
-    # solution = formulation_1(graph, k_value, b_value)
-    # solution = formulation_2(graph, k_value, b_value)
-    # solution = formulation_3(graph, k_value, b_value)
-    solution = formulation_4(graph, k_value, b_value)
+    formulations = [
+        formulation_1,
+        formulation_2,
+        formulation_3,
+        formulation_4,
+    ]
+    solution = formulations[formulation_index - 1](
+        graph,
+        k_value,
+        b_value,
+        quiet,
+    )
 
     return solution
 
 
-def formulation_1(graph: nx.Graph, k_value: int,
-                  b_value: int) -> (dict[str, list] | None):
+def formulation_1(graph: nx.Graph,
+                  k_value: int,
+                  b_value: int,
+                  quiet: bool = False) -> (dict[str, list] | None):
     """ First formulation of an unilevel approach. """
 
     K = range(k_value)
@@ -132,9 +221,10 @@ def formulation_1(graph: nx.Graph, k_value: int,
     for i in K:
         solver.Add(sum(e[i][v] for v in V) <= b_value)
 
-    print("\nProblem definition:")
-    print("  Number of variables =", solver.NumVariables())
-    print("  Number of constraints =", solver.NumConstraints())
+    if not quiet:
+        print("\nProblem definition:")
+        print("  Number of variables =", solver.NumVariables())
+        print("  Number of constraints =", solver.NumConstraints())
 
     # Add the "1a" objective function
     solver.Maximize(sum(e[i][v] for i in K for v in V))
@@ -142,14 +232,15 @@ def formulation_1(graph: nx.Graph, k_value: int,
     # Solve the system.
     status = solver.Solve()
 
-    print("\nAdvanced usage:")
-    print(f"  Problem solved in {solver.wall_time()} milliseconds")
-    print(f"  Problem solved in {solver.iterations()} iterations")
-    print(f"  Problem solved in {solver.nodes()} branch-and-bound nodes")
+    if not quiet:
+        print("\nAdvanced usage:")
+        print(f"  Problem solved in {solver.wall_time()} milliseconds")
+        print(f"  Problem solved in {solver.iterations()} iterations")
+        print(f"  Problem solved in {solver.nodes()} branch-and-bound nodes")
 
     # Print and Parse the solution found.
     if status == pywraplp.Solver.OPTIMAL:
-        solution = {"S": [], "V": [[] for _ in K]}
+        solution = {'S': [], 'V': [[] for _ in K]}
 
         for v in V:
             n_shores = 0
@@ -159,20 +250,24 @@ def formulation_1(graph: nx.Graph, k_value: int,
                 assert isinstance(int_var, pywraplp.Variable)
 
                 if int_var.solution_value() == 1:
-                    solution["V"][i].append(v)
+                    solution['V'][i].append(v)
                     n_shores += 1
 
             if n_shores == 0:
-                solution["S"].append(v)
+                solution['S'].append(v)
 
         return solution
 
-    print("The problem does not have an optimal solution.")
+    if not quiet:
+        print("The problem does not have an optimal solution.")
+
     return None
 
 
-def formulation_2(graph: nx.Graph, k_value: int,
-                  b_value: int) -> (dict[str, list] | None):
+def formulation_2(graph: nx.Graph,
+                  k_value: int,
+                  b_value: int,
+                  quiet: bool = False) -> (dict[str, list] | None):
     """ Second formulation of an unilevel approach. """
 
     K = range(k_value)
@@ -213,9 +308,10 @@ def formulation_2(graph: nx.Graph, k_value: int,
     for i in K:
         solver.Add(sum(e[i][v] for v in V) <= b_value)
 
-    print("\nProblem definition:")
-    print("  Number of variables =", solver.NumVariables())
-    print("  Number of constraints =", solver.NumConstraints())
+    if not quiet:
+        print("\nProblem definition:")
+        print("  Number of variables =", solver.NumVariables())
+        print("  Number of constraints =", solver.NumConstraints())
 
     # Add the "1a" objective function
     solver.Maximize(sum(e[i][v] for i in K for v in V))
@@ -223,14 +319,15 @@ def formulation_2(graph: nx.Graph, k_value: int,
     # Solve the system.
     status = solver.Solve()
 
-    print("\nAdvanced usage:")
-    print(f"  Problem solved in {solver.wall_time()} milliseconds")
-    print(f"  Problem solved in {solver.iterations()} iterations")
-    print(f"  Problem solved in {solver.nodes()} branch-and-bound nodes")
+    if not quiet:
+        print("\nAdvanced usage:")
+        print(f"  Problem solved in {solver.wall_time()} milliseconds")
+        print(f"  Problem solved in {solver.iterations()} iterations")
+        print(f"  Problem solved in {solver.nodes()} branch-and-bound nodes")
 
     # Print and Parse the solution found.
     if status == pywraplp.Solver.OPTIMAL:
-        solution = {"S": [], "V": [[] for _ in K]}
+        solution = {'S': [], 'V': [[] for _ in K]}
 
         for v in V:
             n_shores = 0
@@ -240,20 +337,24 @@ def formulation_2(graph: nx.Graph, k_value: int,
                 assert isinstance(int_var, pywraplp.Variable)
 
                 if int_var.solution_value() == 1:
-                    solution["V"][i].append(v)
+                    solution['V'][i].append(v)
                     n_shores += 1
 
             if n_shores == 0:
-                solution["S"].append(v)
+                solution['S'].append(v)
 
         return solution
 
-    print("The problem does not have an optimal solution.")
+    if not quiet:
+        print("The problem does not have an optimal solution.")
+
     return None
 
 
-def formulation_3(graph: nx.Graph, k_value: int,
-                  b_value: int) -> (list[str] | None):
+def formulation_3(graph: nx.Graph,
+                  k_value: int,
+                  b_value: int,
+                  quiet: bool = False) -> (list[str] | None):
     """ Third formulation for an unilevel approach. """
 
     V = graph.nodes()
@@ -282,9 +383,10 @@ def formulation_3(graph: nx.Graph, k_value: int,
         if ow > k_value:
             solver.Add(sum(x[v] for v in w) >= 1)
 
-    print("\nProblem definition:")
-    print("  Number of variables =", solver.NumVariables())
-    print("  Number of constraints =", solver.NumConstraints())
+    if not quiet:
+        print("\nProblem definition:")
+        print("  Number of variables =", solver.NumVariables())
+        print("  Number of constraints =", solver.NumConstraints())
 
     # Add the "3a" objective function
     solver.Minimize(sum(x[v] for v in V))
@@ -292,10 +394,11 @@ def formulation_3(graph: nx.Graph, k_value: int,
     # Solve the system.
     status = solver.Solve()
 
-    print("\nAdvanced usage:")
-    print(f"  Problem solved in {solver.wall_time()} milliseconds")
-    print(f"  Problem solved in {solver.iterations()} iterations")
-    print(f"  Problem solved in {solver.nodes()} branch-and-bound nodes")
+    if not quiet:
+        print("\nAdvanced usage:")
+        print(f"  Problem solved in {solver.wall_time()} milliseconds")
+        print(f"  Problem solved in {solver.iterations()} iterations")
+        print(f"  Problem solved in {solver.nodes()} branch-and-bound nodes")
 
     # Print and Parse the solution found.
     if status == pywraplp.Solver.OPTIMAL:
@@ -310,12 +413,15 @@ def formulation_3(graph: nx.Graph, k_value: int,
 
         return solution
 
-    print("The problem does not have an optimal solution.")
+    if not quiet:
+        print("The problem does not have an optimal solution.")
+
     return None
 
 
-def formulation_4(graph: nx.Graph, k_value: int,
-                  b_value: int) -> (list[str] | None):
+def formulation_4(graph: nx.Graph,
+                  b_value: int,
+                  quiet: bool = False) -> (list[str] | None):
     """ Fourth formulation for an unilevel approach. """
 
     V = graph.nodes()
@@ -338,9 +444,10 @@ def formulation_4(graph: nx.Graph, k_value: int,
             if len(C) == b_value + 1:
                 solver.Add(sum(x[v] for v in C) >= 1)
 
-    print("\nProblem definition:")
-    print("  Number of variables =", solver.NumVariables())
-    print("  Number of constraints =", solver.NumConstraints())
+    if not quiet:
+        print("\nProblem definition:")
+        print("  Number of variables =", solver.NumVariables())
+        print("  Number of constraints =", solver.NumConstraints())
 
     # Add the "3a" objective function
     solver.Minimize(sum(x[v] for v in V))
@@ -348,10 +455,11 @@ def formulation_4(graph: nx.Graph, k_value: int,
     # Solve the system.
     status = solver.Solve()
 
-    print("\nAdvanced usage:")
-    print(f"  Problem solved in {solver.wall_time()} milliseconds")
-    print(f"  Problem solved in {solver.iterations()} iterations")
-    print(f"  Problem solved in {solver.nodes()} branch-and-bound nodes")
+    if not quiet:
+        print("\nAdvanced usage:")
+        print(f"  Problem solved in {solver.wall_time()} milliseconds")
+        print(f"  Problem solved in {solver.iterations()} iterations")
+        print(f"  Problem solved in {solver.nodes()} branch-and-bound nodes")
 
     # Print and Parse the solution found.
     if status == pywraplp.Solver.OPTIMAL:
@@ -366,7 +474,9 @@ def formulation_4(graph: nx.Graph, k_value: int,
 
         return solution
 
-    print("The problem does not have an optimal solution.")
+    if not quiet:
+        print("The problem does not have an optimal solution.")
+
     return None
 
 
@@ -448,14 +558,14 @@ def draw_solution(graph: nx.Graph, solution: dict[str, list]):
     if isinstance(solution, dict):
         nx.draw_networkx(graph,
                          n_pos_dict,
-                         nodelist=solution["S"],
-                         edgelist=graph.edges(solution["S"]),
+                         nodelist=solution['S'],
+                         edgelist=graph.edges(solution['S']),
                          node_color="silver",
                          style="dashed")
 
-        v_edges = [graph.subgraph(vi).edges() for vi in solution["V"]]
+        v_edges = [graph.subgraph(vi).edges() for vi in solution['V']]
 
-        for vi_nodes, vi_edges, color in zip(solution["V"], v_edges, COLORS):
+        for vi_nodes, vi_edges, color in zip(solution['V'], v_edges, COLORS):
             nx.draw_networkx(graph,
                              n_pos_dict,
                              nodelist=vi_nodes,
@@ -491,6 +601,23 @@ def draw_solution(graph: nx.Graph, solution: dict[str, list]):
         sys.exit("Error: unknown solution format")
 
     plt.show()
+
+
+def print_solution(solution):
+    """ Function to print the solution into the terminal in a more
+    comprehensive way. """
+
+    print("\nSolution:")
+
+    if isinstance(solution, dict):
+        print(f"  S: {solution['S']}")
+        print("  V: [")
+        for shore in solution['V']:
+            print(f"    {shore},")
+        print("  ]")
+
+    elif isinstance(solution, list):
+        print(f"  S: {solution}")
 
 
 if __name__ == "__main__":
