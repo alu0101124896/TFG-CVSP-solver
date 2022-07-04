@@ -29,12 +29,12 @@ def main():
                         help="max number of nodes on the remaining shores")
     parser.add_argument("-f",
                         "--formulation",
-                        default=1,
+                        default=None,
                         help="select a formulation to use")
 
     parser.add_argument("--no-gui",
                         action="store_true",
-                        help="do NOT output the solution graphicaly")
+                        help="do NOT output the solution graphically")
     parser.add_argument("-q",
                         "--quiet",
                         action="store_true",
