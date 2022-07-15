@@ -14,7 +14,7 @@ from matplotlib import use as mpl_use
 
 from cvsp import cvsp_solver
 
-mpl_use('TkAgg', force=True)
+mpl_use('Qt5Agg', force=True)
 
 DEF_INPUT_FILE = Path("./data/graph1.txt")
 DEF_OUTPUT_FILE = Path("./data/graph1-solution.json")
