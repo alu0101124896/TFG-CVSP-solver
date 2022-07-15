@@ -16,22 +16,46 @@ from cvsp import cvsp_solver
 
 mpl_use('TkAgg', force=True)
 
-COLORS = [
-    "lightcoral",
-    "lightgreen",
-    "lightblue",
-    "yellow",
-    "lightsalmon",
-]
+DEF_INPUT_FILE = Path("./data/graph1.txt")
+DEF_OUTPUT_FILE = Path("./data/graph1-solution.json")
+DEF_K_VALUE = 3
+DEF_B_VALUE = 3
+DEF_LIBRARY = "gurobi"
+DEF_FORMULATION_INDEX = 1
+DEF_NO_GUI = False
+DEF_QUIET = False
+
+EXTRACTED_NODES_COLOR = "silver"
+EXTRACTED_SHORES_LINE_WIDTH = 1.0
+EXTRACTED_NODES_LINE_STYLE = "dashed"
+
+REMAINING_SHORES_COLORS = plt.rcParams['axes.prop_cycle'].by_key()['color']
+REMAINING_SHORES_LINE_WIDTH = 1.5
+REMAINING_NODES_LINE_STYLE = "solid"
 
 
 def main():
-    """ Entry point to parse the cli arguments for the main program. """
+    """ Entry point for the main program. """
 
-    # Initialize parser
+    args = parse_cli_args()
+
+    solve_cvsp(
+        args.input_file,
+        args.output_file,
+        args.k_value,
+        args.b_value,
+        args.library_name,
+        args.formulation_index,
+        args.no_gui,
+        args.quiet,
+    )
+
+
+def parse_cli_args():
+    """ Function to parse cli's argument flags and their assigned values. """
+
     parser = argparse.ArgumentParser(description="Test program")
 
-    # Adding optional argument
     parser.add_argument("-i",
                         "--input-file",
                         help="import graph's definition from INPUT_FILE")
@@ -47,10 +71,18 @@ def main():
                         "--b-value",
                         default=None,
                         help="max number of nodes on the remaining shores")
-    parser.add_argument("-f",
-                        "--formulation",
+
+    parser.add_argument("-l",
+                        "--library_name",
                         default=None,
-                        help="select a formulation to use [1-4]")
+                        help="select an optimization library to use: " +
+                        "[ortools, gurobi]")
+    parser.add_argument("-f",
+                        "--formulation_index",
+                        default=None,
+                        help="select a problem formulation to use. " +
+                        "For OR-Tools library: [1-4]. " +
+                        "For Gurobi library: [1-6]")
 
     parser.add_argument("--no-gui",
                         action="store_true",
@@ -60,7 +92,6 @@ def main():
                         action="store_true",
                         help="suppress all normal cli output")
 
-    # Read arguments from command line
     args = parser.parse_args()
 
     if args.input_file:
@@ -71,53 +102,65 @@ def main():
         args.k_value = int(args.k_value)
     if args.b_value:
         args.b_value = int(args.b_value)
-    if args.formulation:
-        args.formulation = int(args.formulation)
+    if args.formulation_index:
+        args.formulation_index = int(args.formulation_index)
 
-    cvsp(
-        args.input_file,
-        args.output_file,
-        args.k_value,
-        args.b_value,
-        args.formulation,
-        args.no_gui,
-        args.quiet,
-    )
+    return args
 
 
-def cvsp(input_file: Path = None,
-         output_file: Path = None,
-         k_value: int = None,
-         b_value: int = None,
-         formulation_index: int = None,
-         no_gui: bool = False,
-         quiet: bool = False):
+def solve_cvsp(input_file: Path = None,
+               output_file: Path = None,
+               k_value: int = None,
+               b_value: int = None,
+               library_name: str = None,
+               formulation_index: int = None,
+               no_gui: bool = DEF_NO_GUI,
+               quiet: bool = DEF_QUIET):
     """ Main function to start the execution of the program. """
 
     if input_file is None:
         if quiet:
-            input_file = Path("./data/graph1.txt")
+            input_file = DEF_INPUT_FILE
         else:
-            input_file = (input("File path (default = './data/graph1.txt'): ")
-                          or Path("./data/graph1.txt"))
+            input_file = (
+                input(f"File path (default = './{DEF_INPUT_FILE}'): ")
+                or DEF_INPUT_FILE)
+
+    if output_file is None and not quiet:
+        output_file = (
+            input(f"Export solution to (default = './{DEF_OUTPUT_FILE}'): ")
+            or DEF_OUTPUT_FILE)
 
     if k_value is None:
         if quiet:
-            k_value = 3
+            k_value = DEF_K_VALUE
         else:
-            k_value = int(input("k value (default = '3'): ") or 3)
+            k_value = int(
+                input(f"k value (default = '{DEF_K_VALUE}'): ") or DEF_K_VALUE)
 
     if b_value is None:
         if quiet:
-            b_value = 3
+            b_value = DEF_B_VALUE
         else:
-            b_value = int(input("b value (default = '3'): ") or 3)
+            b_value = int(
+                input(f"b value (default = '{DEF_B_VALUE}'): ") or DEF_B_VALUE)
+
+    if library_name is None:
+        if quiet:
+            library_name = DEF_LIBRARY
+        else:
+            library_name = (
+                input(f"Library name (default = '{DEF_LIBRARY}'): ")
+                or DEF_LIBRARY)
 
     if formulation_index is None:
         if quiet:
-            formulation_index = 1
+            formulation_index = DEF_FORMULATION_INDEX
         else:
-            formulation_index = int(input("Formulation index (default = '1'): ") or 1)
+            formulation_index = int(
+                input("Formulation index " +
+                      f"(default = '{DEF_FORMULATION_INDEX}'): ")
+                or DEF_FORMULATION_INDEX)
 
     with open(input_file, 'r', encoding="utf-8-sig") as infile:
         raw_data = infile.read()
@@ -125,8 +168,8 @@ def cvsp(input_file: Path = None,
 
         graph = build_graph(n_nodes, n_edges, is_directed, edges_data)
 
-        solution = cvsp_solver(graph, k_value, b_value, formulation_index,
-                               quiet)
+        solution = cvsp_solver(graph, k_value, b_value, library_name,
+                               formulation_index - 1, quiet)
 
         if solution is not None:
             if not no_gui:
@@ -189,26 +232,30 @@ def draw_solution(graph: nx.Graph, solution: dict[str, list]):
                          n_pos_dict,
                          nodelist=solution['S'],
                          edgelist=graph.edges(solution['S']),
-                         node_color="silver",
-                         style="dashed")
+                         node_color=EXTRACTED_NODES_COLOR,
+                         width=EXTRACTED_SHORES_LINE_WIDTH,
+                         style=EXTRACTED_NODES_LINE_STYLE)
 
         v_edges = [graph.subgraph(vi).edges() for vi in solution['V']]
 
-        for vi_nodes, vi_edges, color in zip(solution['V'], v_edges, COLORS):
+        for vi_nodes, vi_edges, shore_color in zip(solution['V'], v_edges,
+                                                   REMAINING_SHORES_COLORS):
             nx.draw_networkx(graph,
                              n_pos_dict,
                              nodelist=vi_nodes,
                              edgelist=vi_edges,
-                             node_color=color,
-                             width=1.5)
+                             node_color=shore_color,
+                             width=REMAINING_SHORES_LINE_WIDTH,
+                             style=REMAINING_NODES_LINE_STYLE)
 
     elif isinstance(solution, list):
         nx.draw_networkx(graph,
                          n_pos_dict,
                          nodelist=solution,
                          edgelist=graph.edges(solution),
-                         node_color="silver",
-                         style="dashed")
+                         node_color=EXTRACTED_NODES_COLOR,
+                         width=EXTRACTED_SHORES_LINE_WIDTH,
+                         style=EXTRACTED_NODES_LINE_STYLE)
 
         for node in solution:
             graph.remove_node(node)
@@ -218,13 +265,15 @@ def draw_solution(graph: nx.Graph, solution: dict[str, list]):
         ]
         ccc_edges = [graph.subgraph(cc).edges() for cc in ccc_nodes]
 
-        for cc_nodes, cc_edges, color in zip(ccc_nodes, ccc_edges, COLORS):
+        for cc_nodes, cc_edges, shore_color in zip(ccc_nodes, ccc_edges,
+                                                   REMAINING_SHORES_COLORS):
             nx.draw_networkx(graph,
                              n_pos_dict,
                              nodelist=cc_nodes,
                              edgelist=cc_edges,
-                             node_color=color,
-                             width=1.5)
+                             node_color=shore_color,
+                             width=REMAINING_SHORES_LINE_WIDTH,
+                             style=REMAINING_NODES_LINE_STYLE)
 
     else:
         sys.exit("Error: unknown solution format")

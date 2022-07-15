@@ -2,29 +2,41 @@
 # -*- coding: utf-8 -*-
 """ This program has the implementation of various formulations to solve the
 Capacitated Vertex Separator Problem (CVSP) on a graph through unilevel and
-bilevel approaches."""
+bilevel approaches. """
 
 from math import inf
 
+from gurobipy import GRB, Model
 import networkx as nx
 from ortools.linear_solver import pywraplp
 
 
 def cvsp_solver(graph: nx.Graph,
-                k_value: int,
-                b_value: int,
-                formulation_index: int = 1,
-                quiet: bool = False) -> (dict[str, list] | None):
+                k_value: int = 3,
+                b_value: int = 3,
+                library_name: str = "gurobi",
+                formulation_index: int = 0,
+                quiet: bool = False) -> (dict[str, list] | list[str] | None):
     """ Function to solve the Capacitated Vertex Separator Problem on the given
     graph. """
 
-    formulations = [
-        formulation_1,
-        formulation_2,
-        formulation_3,
-        formulation_4,
-    ]
-    solution = formulations[formulation_index - 1](
+    formulations = {
+        "ortools": [
+            formulation_1_ortools,
+            formulation_2_ortools,
+            formulation_3_ortools,
+            formulation_4_ortools,
+        ],
+        "gurobi": [
+            formulation_1_gurobi,
+            formulation_2_gurobi,
+            formulation_3_gurobi,
+            formulation_3_lazy_gurobi,
+            formulation_4_gurobi,
+            formulation_4_lazy_gurobi,
+        ],
+    }
+    solution = formulations.get(library_name)[formulation_index](
         graph,
         k_value,
         b_value,
@@ -34,11 +46,11 @@ def cvsp_solver(graph: nx.Graph,
     return solution
 
 
-def formulation_1(graph: nx.Graph,
-                  k_value: int,
-                  b_value: int,
-                  quiet: bool = False) -> (dict[str, list] | None):
-    """ First formulation of an unilevel approach. """
+def formulation_1_ortools(graph: nx.Graph,
+                          k_value: int,
+                          b_value: int,
+                          quiet: bool = False) -> (dict[str, list] | None):
+    """ First formulation using the OR-Tools library. """
 
     K = range(k_value)
     V = graph.nodes()
@@ -95,10 +107,10 @@ def formulation_1(graph: nx.Graph,
             n_shores = 0
 
             for i in K:
-                int_var = e[i][v]
-                assert isinstance(int_var, pywraplp.Variable)
+                variable = e[i][v]
+                assert isinstance(variable, pywraplp.Variable)
 
-                if int_var.solution_value() == 1:
+                if variable.solution_value() == 1:
                     solution['V'][i].append(v)
                     n_shores += 1
 
@@ -113,11 +125,11 @@ def formulation_1(graph: nx.Graph,
     return None
 
 
-def formulation_2(graph: nx.Graph,
-                  k_value: int,
-                  b_value: int,
-                  quiet: bool = False) -> (dict[str, list] | None):
-    """ Second formulation of an unilevel approach. """
+def formulation_2_ortools(graph: nx.Graph,
+                          k_value: int,
+                          b_value: int,
+                          quiet: bool = False) -> (dict[str, list] | None):
+    """ Second formulation using the OR-Tools library. """
 
     K = range(k_value)
     V = graph.nodes()
@@ -182,10 +194,10 @@ def formulation_2(graph: nx.Graph,
             n_shores = 0
 
             for i in K:
-                int_var = e[i][v]
-                assert isinstance(int_var, pywraplp.Variable)
+                variable = e[i][v]
+                assert isinstance(variable, pywraplp.Variable)
 
-                if int_var.solution_value() == 1:
+                if variable.solution_value() == 1:
                     solution['V'][i].append(v)
                     n_shores += 1
 
@@ -200,11 +212,11 @@ def formulation_2(graph: nx.Graph,
     return None
 
 
-def formulation_3(graph: nx.Graph,
-                  k_value: int,
-                  b_value: int,
-                  quiet: bool = False) -> (list[str] | None):
-    """ Third formulation for an unilevel approach. """
+def formulation_3_ortools(graph: nx.Graph,
+                          k_value: int,
+                          b_value: int,
+                          quiet: bool = False) -> (list[str] | None):
+    """ Third formulation using the OR-Tools library. """
 
     V = graph.nodes()
 
@@ -230,7 +242,7 @@ def formulation_3(graph: nx.Graph,
             ow = inf
 
         else:
-            ow = n_bins_to_pack(gw, b_value)
+            ow = n_bins_to_pack_ortools(gw, b_value)
 
         if ow > k_value:
             solver.Add(sum(x[v] for v in w) >= 1)
@@ -254,10 +266,10 @@ def formulation_3(graph: nx.Graph,
         solution = []
 
         for v in V:
-            int_var = x[v]
-            assert isinstance(int_var, pywraplp.Variable)
+            variable = x[v]
+            assert isinstance(variable, pywraplp.Variable)
 
-            if int_var.solution_value() == 1:
+            if variable.solution_value() == 1:
                 solution.append(v)
 
         return solution
@@ -268,11 +280,11 @@ def formulation_3(graph: nx.Graph,
     return None
 
 
-def formulation_4(graph: nx.Graph,
-                  k_value: int,
-                  b_value: int,
-                  quiet: bool = False) -> (list[str] | None):
-    """ Fourth formulation for an unilevel approach. """
+def formulation_4_ortools(graph: nx.Graph,
+                          _,
+                          b_value: int,
+                          quiet: bool = False) -> (list[str] | None):
+    """ Fourth formulation using the OR-Tools library. """
 
     V = graph.nodes()
 
@@ -316,10 +328,10 @@ def formulation_4(graph: nx.Graph,
         solution = []
 
         for v in V:
-            int_var = x[v]
-            assert isinstance(int_var, pywraplp.Variable)
+            variable = x[v]
+            assert isinstance(variable, pywraplp.Variable)
 
-            if int_var.solution_value() == 1:
+            if variable.solution_value() == 1:
                 solution.append(v)
 
         return solution
@@ -330,8 +342,378 @@ def formulation_4(graph: nx.Graph,
     return None
 
 
+def formulation_1_gurobi(graph: nx.Graph,
+                         k_value: int,
+                         b_value: int,
+                         quiet: bool = False) -> (dict[str, list] | None):
+    """ First formulation using the Gurobi library. """
+
+    K = range(k_value)
+    V = graph.nodes()
+    E = graph.edges()
+
+    # Create a new model.
+    model = Model()
+    model.Params.OutputFlag = 0
+
+    # Create the binary variables ("1e" constraints)
+    e = []
+    for i in K:
+        shore_i = {}
+        for v in V:
+            shore_i.update(
+                {v: model.addVar(vtype=GRB.BINARY, name=f"ξ_{i}_{v}")})
+        e.append(shore_i)
+
+    # Add the "1a" objective function.
+    model.setObjective(sum(e[i][v] for i in K for v in V), GRB.MAXIMIZE)
+
+    # Add the formulation constraints.
+    # "1b" constraints.
+    for v in V:
+        model.addConstr(sum(e[i][v] for i in K) <= 1)
+
+    # "1c" constraints.
+    for i in K:
+        for w, v in E:
+            model.addConstr(e[i][w] + sum(e[j][v] for j in K if i != j) <= 1)
+
+    # "1d" constraints.
+    for i in K:
+        model.addConstr(sum(e[i][v] for v in V) <= b_value)
+
+    # Solve the system.
+    model.optimize()
+
+    if not quiet:
+        print(f"\nSolution found in {model.Runtime} seconds")
+
+    # Print and Parse the solution found.
+    # if solution is optimal:
+    solution = {'S': [], 'V': [[] for _ in K]}
+
+    for v in V:
+        n_shores = 0
+
+        for i in K:
+            variable = e[i][v]
+            # assert isinstance(variable, GRB.BINARY)
+
+            if variable.x == 1:
+                solution['V'][i].append(v)
+                n_shores += 1
+
+        if n_shores == 0:
+            solution['S'].append(v)
+
+    return solution
+
+
+def formulation_2_gurobi(graph: nx.Graph,
+                         k_value: int,
+                         b_value: int,
+                         quiet: bool = False) -> (dict[str, list] | None):
+    """ Second formulation using the Gurobi library. """
+
+    K = range(k_value)
+    V = graph.nodes()
+    Q = list(nx.find_cliques(graph))
+
+    # Create a new model.
+    model = Model()
+    model.Params.OutputFlag = 0
+
+    # Create the binary variables ("1e" constraints).
+    e = []
+    for i in K:
+        shore_i = {}
+        for v in V:
+            shore_i.update(
+                {v: model.addVar(vtype=GRB.BINARY, name=f"ξ_{i}_{v}")})
+        e.append(shore_i)
+
+    y = []
+    for i in K:
+        shore_i = {}
+        for q in Q:
+            shore_i.update(
+                {f"{q}": model.addVar(vtype=GRB.BINARY, name=f"ψ_{i}_{q}")})
+        y.append(shore_i)
+
+    # Add the "1a" objective function.
+    model.setObjective(sum(e[i][v] for i in K for v in V), GRB.MAXIMIZE)
+
+    # Add the formulation constraints.
+    # "2a" constraints.
+    for q in Q:
+        model.addConstr(sum(y[i][f"{q}"] for i in K) <= 1)
+
+    # "2b" constraints.
+    for i in K:
+        for q in Q:
+            for v in q:
+                model.addConstr(e[i][v] - y[i][f"{q}"] <= 0)
+
+    # "1d" constraints.
+    for i in K:
+        model.addConstr(sum(e[i][v] for v in V) <= b_value)
+
+    # Solve the system.
+    model.optimize()
+
+    if not quiet:
+        print(f"\nSolution found in {model.Runtime} seconds")
+
+    # Print and Parse the solution found.
+    # if solution is optimal:
+    solution = {'S': [], 'V': [[] for _ in K]}
+
+    for v in V:
+        n_shores = 0
+
+        for i in K:
+            variable = e[i][v]
+            # assert isinstance(variable, GRB.BINARY)
+
+            if variable.x == 1:
+                solution['V'][i].append(v)
+                n_shores += 1
+
+        if n_shores == 0:
+            solution['S'].append(v)
+
+    return solution
+
+
+def formulation_3_gurobi(graph: nx.Graph,
+                         k_value: int,
+                         b_value: int,
+                         quiet: bool = False) -> (list[str] | None):
+    """ Third formulation using the Gurobi library. """
+
+    V = graph.nodes()
+
+    # Create a new model.
+    model = Model()
+    model.Params.OutputFlag = 0
+
+    # Create the binary variables ("3c" constraints).
+    x = {}
+    for v in V:
+        x.update({v: model.addVar(vtype=GRB.BINARY, name=f"{v}")})
+
+    # Add the "3a" objective function.
+    model.setObjective(sum(x[v] for v in V), GRB.MINIMIZE)
+
+    # Add the "3b" constraints.
+    W = subsets(list(V))
+    for w in W:
+        gw = graph.subgraph(w)
+
+        if any((len(cc_nodes) > b_value)
+               for cc_nodes in nx.connected_components(gw)):
+            ow = inf
+
+        else:
+            ow = n_bins_to_pack_gurobi(gw, b_value)
+
+        if ow > k_value:
+            model.addConstr(sum(x[v] for v in w) >= 1)
+
+    # Solve the system.
+    model.optimize()
+
+    if not quiet:
+        print(f"\nSolution found in {model.Runtime} seconds")
+
+    # Print and Parse the solution found.
+    # if solution is optimal:
+    solution = []
+
+    for v in V:
+        variable = x[v]
+        # assert isinstance(variable, GRB.BINARY)
+
+        if variable.x == 1:
+            solution.append(v)
+
+    return solution
+
+
+def formulation_3_lazy_gurobi(graph: nx.Graph,
+                              k_value: int,
+                              b_value: int,
+                              quiet: bool = False) -> (list[str] | None):
+    """ Third formulation using the Gurobi library and the dynamic row
+    generation method. """
+
+    V = graph.nodes()
+
+    # Create a new model.
+    model = Model()
+    model.Params.OutputFlag = 0
+    model.Params.lazyConstraints = 1
+
+    # Create the binary variables ("3c" constraints).
+    x = {}
+    for v in V:
+        x.update({v: model.addVar(vtype=GRB.BINARY, name=f"{v}")})
+
+    # Add the "3a" objective function.
+    model.setObjective(sum(x[v] for v in V), GRB.MINIMIZE)
+
+    # Add the "3b" constraints by the dynamic row generation method.
+    def sec_lazy(model, where):
+        if where == GRB.Callback.MIPSOL:
+            values = model.cbGetSolution(x)
+            w = list(node for node, value in values.items() if value == 0)
+            gw = graph.subgraph(w)
+
+            if any((len(cc_nodes) > b_value)
+                   for cc_nodes in nx.connected_components(gw)):
+                ow = inf
+
+            else:
+                ow = n_bins_to_pack_gurobi(gw, b_value)
+
+            if ow > k_value:
+                model.cbLazy(sum(x[v] for v in w) >= 1)
+                return True
+
+            return False
+
+        return True
+
+    # Solve the system.
+    model.optimize(sec_lazy)
+
+    if not quiet:
+        print(f"\nSolution found in {model.Runtime} seconds")
+
+    # Print and Parse the solution found.
+    # if solution is optimal:
+    solution = []
+
+    for v in V:
+        variable = x[v]
+        # assert isinstance(variable, GRB.BINARY)
+
+        if variable.x == 1:
+            solution.append(v)
+
+    return solution
+
+
+def formulation_4_gurobi(graph: nx.Graph,
+                         _,
+                         b_value: int,
+                         quiet: bool = False) -> (list[str] | None):
+    """ Fourth formulation using the Gurobi library. """
+
+    V = graph.nodes()
+
+    # Create a new model.
+    model = Model()
+    model.Params.OutputFlag = 0
+
+    # Create the binary variables ("3c" constraints).
+    x = {}
+    for v in V:
+        x.update({v: model.addVar(vtype=GRB.BINARY, name=f"{v}")})
+
+    # Add the "3a" objective function.
+    model.setObjective(sum(x[v] for v in V), GRB.MINIMIZE)
+
+    # Add the "4" constraints.
+    W = subsets(list(V))
+    for w in W:
+        gw = graph.subgraph(w)
+
+        for C in nx.connected_components(gw):
+            if len(C) == b_value + 1:
+                model.addConstr(sum(x[v] for v in C) >= 1)
+
+    # Solve the system.
+    model.optimize()
+
+    if not quiet:
+        print(f"\nSolution found in {model.Runtime} seconds")
+
+    # Print and Parse the solution found.
+    # if solution is optimal:
+    solution = []
+
+    for v in V:
+        variable = x[v]
+        # assert isinstance(variable, GRB.BINARY)
+
+        if variable.x == 1:
+            solution.append(v)
+
+    return solution
+
+
+def formulation_4_lazy_gurobi(graph: nx.Graph,
+                              _,
+                              b_value: int,
+                              quiet: bool = False) -> (list[str] | None):
+    """ Fourth formulation using the Gurobi library and the dynamic row
+    generation method. """
+
+    V = graph.nodes()
+
+    # Create a new model.
+    model = Model()
+    model.Params.OutputFlag = 0
+    model.Params.lazyConstraints = 1
+
+    # Create the binary variables ("3c" constraints).
+    x = {}
+    for v in V:
+        x.update({v: model.addVar(vtype=GRB.BINARY, name=f"{v}")})
+
+    # Add the "3a" objective function.
+    model.setObjective(sum(x[v] for v in V), GRB.MINIMIZE)
+
+    # Add the "4" constraints.
+    def sec_lazy(model, where):
+        if where == GRB.Callback.MIPSOL:
+            values = model.cbGetSolution(x)
+            w = list(node for node, value in values.items() if value == 0)
+            gw = graph.subgraph(w)
+
+            constraints_added = False
+            for C in nx.connected_components(gw):
+                if len(C) > b_value:
+                    model.cbLazy(sum(x[v] for v in C) >= 1)
+                    constraints_added = True
+
+            return constraints_added
+
+        return True
+
+    # Solve the system.
+    model.optimize(sec_lazy)
+
+    if not quiet:
+        print(f"\nSolution found in {model.Runtime} seconds")
+
+    # Print and Parse the solution found.
+    # if solution is optimal:
+    solution = []
+
+    for v in V:
+        variable = x[v]
+        # assert isinstance(variable, GRB.BINARY)
+
+        if variable.x == 1:
+            solution.append(v)
+
+    return solution
+
+
 def subsets(nodes: list[str]) -> list[list[str]]:
-    """ Function to get all combinations with the given nodes. """
+    """ Auxiliary function to get all combinations with the given nodes. """
 
     if len(nodes) == 0:
         return [[]]
@@ -342,9 +724,10 @@ def subsets(nodes: list[str]) -> list[list[str]]:
     return z
 
 
-def n_bins_to_pack(graph: nx.Graph, bin_size: int) -> int:
-    """ Function to get the number of bins of size bin_size needed to pack the
-    connected components of the given graph. """
+def n_bins_to_pack_ortools(graph: nx.Graph, bin_size: int) -> int:
+    """ Auxiliary function to get the number of bins of size bin_size needed to
+    pack the connected components of the given graph using the OR-Tools
+    library. """
 
     # Create the mip solver with the SCIP backend.
     solver = pywraplp.Solver.CreateSolver("SCIP")
@@ -372,7 +755,7 @@ def n_bins_to_pack(graph: nx.Graph, bin_size: int) -> int:
         solver.Add(sum(x[(i, j)] for i in graph.nodes()) <= y[j] * bin_size)
 
     # Objective: minimize the number of bins used.
-    solver.Minimize(solver.Sum([y[j] for j in range(len(graph.nodes()))]))
+    solver.Minimize(sum([y[j] for j in range(len(graph.nodes()))]))
 
     # Solve the system.
     status = solver.Solve()
@@ -396,5 +779,63 @@ def n_bins_to_pack(graph: nx.Graph, bin_size: int) -> int:
 
     else:
         num_bins = inf
+
+    return num_bins
+
+
+def n_bins_to_pack_gurobi(graph: nx.Graph, bin_size: int) -> int:
+    """ Auxiliary function to get the number of bins of size bin_size needed to
+    pack the connected components of the given graph using the Gurobi
+    library. """
+
+    # Create a new model.
+    model = Model()
+    model.Params.OutputFlag = 0
+
+    # Variables
+    # x[i, j] = 1 if item i is packed in bin j.
+    x = {}
+    for i in graph.nodes():
+        for j in range(len(graph.nodes())):
+            x[(i, j)] = model.addVar(vtype=GRB.BINARY, name=f"x_{i}_{j}")
+
+    # y[j] = 1 if bin j is used.
+    y = {}
+    for j in range(len(graph.nodes())):
+        y[j] = model.addVar(vtype=GRB.BINARY, name=f"y[{j}]")
+
+    # Constraints
+    # Each item must be in exactly one bin.
+    for i in graph.nodes():
+        model.addConstr(sum(x[i, j] for j in range(len(graph.nodes()))) == 1)
+
+    # The amount packed in each bin cannot exceed its capacity.
+    for j in range(len(graph.nodes())):
+        model.addConstr(
+            sum(x[(i, j)] for i in graph.nodes()) <= y[j] * bin_size)
+
+    # Objective: minimize the number of bins used.
+    model.setObjective(sum([y[j] for j in range(len(graph.nodes()))]),
+                       GRB.MINIMIZE)
+
+    # Solve the system.
+    model.optimize()
+
+    # Print and Parse the solution found.
+    # if solution is optimal:
+    num_bins = 0
+
+    for j in range(len(graph.nodes())):
+        if y[j].x == 1:
+            bin_items = []
+            bin_weight = 0
+
+            for i in graph.nodes():
+                if x[i, j].x > 0:
+                    bin_items.append(i)
+                    bin_weight += 1
+
+            if bin_weight > 0:
+                num_bins += 1
 
     return num_bins
