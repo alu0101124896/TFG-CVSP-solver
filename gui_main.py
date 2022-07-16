@@ -41,8 +41,8 @@ def main():
 
 class UiMainWindow(object):
     """ Main app window class. """
-    def __init__(self):
 
+    def __init__(self):
         self.central_widget = None
         self.grid_layout = None
 
@@ -62,7 +62,6 @@ class UiMainWindow(object):
         self.formulation_selector = None
         self.get_solution_button = None
 
-        self.vertical_layout = None
         self.figure = None
         self.canvas = None
         self.tool_bar = None
@@ -232,7 +231,7 @@ class UiMainWindow(object):
             self.graph = Graph(self.input_file)
             self.show_graph()
 
-    def set_input_file(self, input_file):
+    def set_input_file(self, input_file: str):
         """ Function to set a new input file path. """
 
         self.input_file = Path(input_file)
@@ -244,7 +243,7 @@ class UiMainWindow(object):
 
         self.selected_file_label.setText(ipf_str)
 
-    def update_formulation_selector(self, library_name):
+    def update_formulation_selector(self, library_name: str):
         """ Function to update the available formulations for the selected
         library. """
 
@@ -257,10 +256,10 @@ class UiMainWindow(object):
 
         if self.graph is not None:
             self.graph.solve_cvsp(
-                self.k_value.value(),
-                self.b_value.value(),
                 self.library_selector.currentText(),
                 self.formulation_selector.currentIndex(),
+                self.k_value.value(),
+                self.b_value.value(),
             )
 
             self.show_graph()

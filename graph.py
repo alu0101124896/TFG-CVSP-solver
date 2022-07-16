@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+from pathlib import Path
 import sys
 
 import matplotlib.pyplot as plt
@@ -24,7 +25,7 @@ REMAINING_NODES_LINE_STYLE = "solid"
 
 class Graph:
     """ Class to represent a NetworkX Graph. """
-    def __init__(self, input_file):
+    def __init__(self, input_file: Path):
 
         self.nx_graph = None
         self.cvsp_solution = None
@@ -76,16 +77,16 @@ class Graph:
             edge_raw_data.split(', ') for edge_raw_data in edges_raw_data
         ]
 
-    def solve_cvsp(self, k_value, b_value, library_selector,
-                   formulation_selector):
+    def solve_cvsp(self, library_name: str, formulation_index: int,
+                   k_value: int, b_value: int):
         """ Function to solve the cvsp problem for the loaded graph. """
 
         self.cvsp_solution = cvsp_solver(
             self.nx_graph,
+            library_name,
+            formulation_index,
             k_value,
             b_value,
-            library_selector,
-            formulation_selector,
             QUIET,
         )
 

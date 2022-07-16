@@ -63,6 +63,19 @@ def parse_cli_args():
                         "--output-file",
                         help="export the solution to OUTPUT_FILE")
 
+    parser.add_argument("-l",
+                        "--library_name",
+                        default=None,
+                        help="select an optimization library to use. " +
+                        "For Google OR-Tools library: 'ortools'. " +
+                        "For Gurobi Optimization library: 'gurobi'")
+    parser.add_argument("-f",
+                        "--formulation_index",
+                        default=None,
+                        help="select a problem formulation to use. " +
+                        "For Google OR-Tools library: [1-4]. " +
+                        "For Gurobi Optimization library: [1-6]")
+
     parser.add_argument("-k",
                         "--k-value",
                         default=None,
@@ -71,18 +84,6 @@ def parse_cli_args():
                         "--b-value",
                         default=None,
                         help="max number of nodes on the remaining shores")
-
-    parser.add_argument("-l",
-                        "--library_name",
-                        default=None,
-                        help="select an optimization library to use: " +
-                        "[ortools, gurobi]")
-    parser.add_argument("-f",
-                        "--formulation_index",
-                        default=None,
-                        help="select a problem formulation to use. " +
-                        "For OR-Tools library: [1-4]. " +
-                        "For Gurobi library: [1-6]")
 
     parser.add_argument("--no-gui",
                         action="store_true",
@@ -98,22 +99,22 @@ def parse_cli_args():
         args.input_file = Path(args.input_file)
     if args.output_file:
         args.output_file = Path(args.output_file)
+    if args.formulation_index:
+        args.formulation_index = int(args.formulation_index)
     if args.k_value:
         args.k_value = int(args.k_value)
     if args.b_value:
         args.b_value = int(args.b_value)
-    if args.formulation_index:
-        args.formulation_index = int(args.formulation_index)
 
     return args
 
 
 def solve_cvsp(input_file: Path = None,
                output_file: Path = None,
-               k_value: int = None,
-               b_value: int = None,
                library_name: str = None,
                formulation_index: int = None,
+               k_value: int = None,
+               b_value: int = None,
                no_gui: bool = DEF_NO_GUI,
                quiet: bool = DEF_QUIET):
     """ Main function to start the execution of the program. """
@@ -130,20 +131,6 @@ def solve_cvsp(input_file: Path = None,
         output_file = (
             input(f"Export solution to (default = './{DEF_OUTPUT_FILE}'): ")
             or DEF_OUTPUT_FILE)
-
-    if k_value is None:
-        if quiet:
-            k_value = DEF_K_VALUE
-        else:
-            k_value = int(
-                input(f"k value (default = '{DEF_K_VALUE}'): ") or DEF_K_VALUE)
-
-    if b_value is None:
-        if quiet:
-            b_value = DEF_B_VALUE
-        else:
-            b_value = int(
-                input(f"b value (default = '{DEF_B_VALUE}'): ") or DEF_B_VALUE)
 
     if library_name is None:
         if quiet:
@@ -162,14 +149,28 @@ def solve_cvsp(input_file: Path = None,
                       f"(default = '{DEF_FORMULATION_INDEX}'): ")
                 or DEF_FORMULATION_INDEX)
 
+    if k_value is None:
+        if quiet:
+            k_value = DEF_K_VALUE
+        else:
+            k_value = int(
+                input(f"k value (default = '{DEF_K_VALUE}'): ") or DEF_K_VALUE)
+
+    if b_value is None:
+        if quiet:
+            b_value = DEF_B_VALUE
+        else:
+            b_value = int(
+                input(f"b value (default = '{DEF_B_VALUE}'): ") or DEF_B_VALUE)
+
     with open(input_file, 'r', encoding="utf-8-sig") as infile:
         raw_data = infile.read()
         n_nodes, n_edges, is_directed, edges_data = parse_data(raw_data)
 
         graph = build_graph(n_nodes, n_edges, is_directed, edges_data)
 
-        solution = cvsp_solver(graph, k_value, b_value, library_name,
-                               formulation_index - 1, quiet)
+        solution = cvsp_solver(graph, library_name, formulation_index - 1,
+                               k_value, b_value, quiet)
 
         if solution is not None:
             if not no_gui:

@@ -12,10 +12,10 @@ from ortools.linear_solver import pywraplp
 
 
 def cvsp_solver(graph: nx.Graph,
-                k_value: int = 3,
-                b_value: int = 3,
                 library_name: str = "gurobi",
                 formulation_index: int = 0,
+                k_value: int = 3,
+                b_value: int = 3,
                 quiet: bool = False) -> (dict[str, list] | list[str] | None):
     """ Function to solve the Capacitated Vertex Separator Problem on the given
     graph. """
