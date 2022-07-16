@@ -12,7 +12,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from matplotlib import use as mpl_use
 
-from cvsp import cvsp_solver
+from src.cvsp import cvsp_solver
 
 mpl_use('Qt5Agg', force=True)
 

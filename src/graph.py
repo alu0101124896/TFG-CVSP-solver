@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from matplotlib import use as mpl_use
 import networkx as nx
 
-from cvsp import cvsp_solver
+from src.cvsp import cvsp_solver
 
 mpl_use('TkAgg', force=True)
 

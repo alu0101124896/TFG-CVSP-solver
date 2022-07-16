@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 from matplotlib import use as mpl_use
 from PyQt5 import QtCore, QtWidgets
 
-from graph import Graph
+from src.graph import Graph
 
 mpl_use('Qt5Agg', force=True)
 
