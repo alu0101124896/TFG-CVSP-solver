@@ -16,6 +16,8 @@ from src.graph import Graph
 
 mpl_use('Qt5Agg', force=True)
 
+QUIET = False
+
 WIN_WIDTH = 650
 WIN_HEIGHT = 630
 
@@ -260,6 +262,7 @@ class UiMainWindow(object):
                 self.formulation_selector.currentIndex(),
                 self.k_value.value(),
                 self.b_value.value(),
+                QUIET,
             )
 
             self.show_graph()

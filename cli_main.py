@@ -6,13 +6,11 @@ Separator Problem (CVSP) on a graph through unilevel and bilevel approaches."""
 import argparse
 import json
 from pathlib import Path
-import sys
 
-import networkx as nx
 import matplotlib.pyplot as plt
 from matplotlib import use as mpl_use
 
-from src.cvsp import cvsp_solver
+from src.graph import Graph
 
 mpl_use('Qt5Agg', force=True)
 
@@ -163,123 +161,25 @@ def solve_cvsp(input_file: Path = None,
             b_value = int(
                 input(f"b value (default = '{DEF_B_VALUE}'): ") or DEF_B_VALUE)
 
-    with open(input_file, 'r', encoding="utf-8-sig") as infile:
-        raw_data = infile.read()
-        n_nodes, n_edges, is_directed, edges_data = parse_data(raw_data)
+    graph = Graph(input_file)
 
-        graph = build_graph(n_nodes, n_edges, is_directed, edges_data)
+    graph.solve_cvsp(library_name, formulation_index - 1, k_value, b_value,
+                     quiet)
 
-        solution = cvsp_solver(graph, library_name, formulation_index - 1,
-                               k_value, b_value, quiet)
-
-        if solution is not None:
-            if not no_gui:
-                draw_solution(graph, solution)
-            elif not quiet:
-                print_solution(solution)
-
-            if output_file is not None:
-                with open(output_file, 'w', encoding="utf-8-sig") as outfile:
-                    print(json.dumps(solution), file=outfile)
+    if graph.cvsp_solution is not None:
+        if not no_gui:
+            graph.show()
+            plt.show()
 
         elif not quiet:
-            print("Solution not found")
+            print_solution(graph.cvsp_solution)
 
+    elif not quiet:
+        print("Solution not found")
 
-def parse_data(raw_data: str) -> tuple[int, int, bool, list[list[str]]]:
-    """ Function to parse a file's data into a list of edges """
-
-    main_data, *edges_raw_data = raw_data.split("\n")
-
-    n_nodes, n_edges, is_directed = main_data.split(', ')
-
-    if edges_raw_data[-1] == '':
-        edges_raw_data.pop()
-
-    edges_data = [
-        edge_raw_data.split(', ') for edge_raw_data in edges_raw_data
-    ]
-
-    return int(n_nodes), int(n_edges), bool(int(is_directed)), edges_data
-
-
-def build_graph(n_nodes: int, n_edges: int, is_directed: bool,
-                edges_data: list[list[str]]) -> nx.Graph:
-    """ Function to build a graph from the given data. """
-
-    if is_directed:
-        graph = nx.DiGraph(edges_data)
-    else:
-        graph = nx.Graph(edges_data)
-
-    if graph.number_of_nodes() != n_nodes:
-        sys.exit("Error: The graph's number of nodes is not the same as" +
-                 " on the data file.")
-
-    if graph.number_of_edges() != n_edges:
-        sys.exit("Error: The graph's number of edges is not the same as" +
-                 " on the data file.")
-
-    return graph
-
-
-def draw_solution(graph: nx.Graph, solution: dict[str, list]):
-    """ Function to draw the graph's solution. """
-
-    n_pos_dict = nx.drawing.layout.kamada_kawai_layout(graph)
-
-    if isinstance(solution, dict):
-        nx.draw_networkx(graph,
-                         n_pos_dict,
-                         nodelist=solution['S'],
-                         edgelist=graph.edges(solution['S']),
-                         node_color=EXTRACTED_NODES_COLOR,
-                         width=EXTRACTED_SHORES_LINE_WIDTH,
-                         style=EXTRACTED_NODES_LINE_STYLE)
-
-        v_edges = [graph.subgraph(vi).edges() for vi in solution['V']]
-
-        for vi_nodes, vi_edges, shore_color in zip(solution['V'], v_edges,
-                                                   REMAINING_SHORES_COLORS):
-            nx.draw_networkx(graph,
-                             n_pos_dict,
-                             nodelist=vi_nodes,
-                             edgelist=vi_edges,
-                             node_color=shore_color,
-                             width=REMAINING_SHORES_LINE_WIDTH,
-                             style=REMAINING_NODES_LINE_STYLE)
-
-    elif isinstance(solution, list):
-        nx.draw_networkx(graph,
-                         n_pos_dict,
-                         nodelist=solution,
-                         edgelist=graph.edges(solution),
-                         node_color=EXTRACTED_NODES_COLOR,
-                         width=EXTRACTED_SHORES_LINE_WIDTH,
-                         style=EXTRACTED_NODES_LINE_STYLE)
-
-        for node in solution:
-            graph.remove_node(node)
-
-        ccc_nodes = [
-            graph.subgraph(cc).copy() for cc in nx.connected_components(graph)
-        ]
-        ccc_edges = [graph.subgraph(cc).edges() for cc in ccc_nodes]
-
-        for cc_nodes, cc_edges, shore_color in zip(ccc_nodes, ccc_edges,
-                                                   REMAINING_SHORES_COLORS):
-            nx.draw_networkx(graph,
-                             n_pos_dict,
-                             nodelist=cc_nodes,
-                             edgelist=cc_edges,
-                             node_color=shore_color,
-                             width=REMAINING_SHORES_LINE_WIDTH,
-                             style=REMAINING_NODES_LINE_STYLE)
-
-    else:
-        sys.exit("Error: unknown solution format")
-
-    plt.show()
+    if output_file is not None:
+        with open(output_file, 'w', encoding="utf-8-sig") as outfile:
+            print(json.dumps(graph.cvsp_solution), file=outfile)
 
 
 def print_solution(solution):

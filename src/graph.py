@@ -12,8 +12,6 @@ from src.cvsp import cvsp_solver
 
 mpl_use('TkAgg', force=True)
 
-QUIET = False
-
 EXTRACTED_NODES_COLOR = "silver"
 EXTRACTED_SHORES_LINE_WIDTH = 1.0
 EXTRACTED_NODES_LINE_STYLE = "dashed"
@@ -78,7 +76,7 @@ class Graph:
         ]
 
     def solve_cvsp(self, library_name: str, formulation_index: int,
-                   k_value: int, b_value: int):
+                   k_value: int, b_value: int, quiet: bool):
         """ Function to solve the cvsp problem for the loaded graph. """
 
         self.cvsp_solution = cvsp_solver(
@@ -87,7 +85,7 @@ class Graph:
             formulation_index,
             k_value,
             b_value,
-            QUIET,
+            quiet,
         )
 
     def show(self):
