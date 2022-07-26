@@ -66,6 +66,9 @@ class UiMainWindow(object):
 
         self.figure = None
         self.canvas = None
+
+        self.horizontal_layout_2 = None
+        self.status_label = None
         self.tool_bar = None
 
         self.line_1 = None
@@ -76,6 +79,7 @@ class UiMainWindow(object):
         self.spacer_item_3 = None
         self.spacer_item_4 = None
         self.spacer_item_5 = None
+        self.spacer_item_6 = None
 
         self.input_file = None
         self.graph = None
@@ -210,8 +214,30 @@ class UiMainWindow(object):
         self.canvas = FigureCanvas(self.figure)
         self.grid_layout.addWidget(self.canvas, 4, 0)
 
-        self.tool_bar = NavToolbar(self.canvas, self.central_widget)
-        self.grid_layout.addWidget(self.tool_bar, 5, 0)
+        # ---------------------------------------------------------------------
+
+        self.horizontal_layout_2 = QtWidgets.QHBoxLayout()
+        self.horizontal_layout_2.setObjectName("horizontal_layout_2")
+        self.grid_layout.addLayout(self.horizontal_layout_2, 5, 0)
+
+        self.status_label = QtWidgets.QLabel(self.central_widget)
+        self.status_label.setObjectName("status_label")
+        self.status_label.setText("")
+        self.horizontal_layout_2.addWidget(self.status_label)
+
+        self.spacer_item_6 = QtWidgets.QSpacerItem(
+            40,
+            20,
+            QtWidgets.QSizePolicy.Expanding,
+            QtWidgets.QSizePolicy.Minimum,
+        )
+        self.horizontal_layout_2.addItem(self.spacer_item_6)
+
+        self.tool_bar = NavToolbar(self.canvas,
+                                   self.central_widget,
+                                   coordinates=False)
+        self.tool_bar.setFixedWidth(300)
+        self.horizontal_layout_2.addWidget(self.tool_bar)
 
         # ---------------------------------------------------------------------
 
@@ -225,13 +251,20 @@ class UiMainWindow(object):
     def load_graph(self):
         """ Function to show a file selection window. """
 
+        self.status_label.setText("Loading graph...")
+
         input_file, check = QtWidgets.QFileDialog.getOpenFileName(
             None, "Select graph file", "", "All Files (*)")
 
-        if check:
+        if not check:
+            self.status_label.setText("Graph not loaded.")
+
+        else:
             self.set_input_file(input_file)
             self.graph = Graph(self.input_file)
             self.show_graph()
+
+            self.status_label.setText("Done.")
 
     def set_input_file(self, input_file: str):
         """ Function to set a new input file path. """
@@ -256,7 +289,14 @@ class UiMainWindow(object):
     def get_solution(self):
         """ Function to get the solution to the CVSP problem. """
 
-        if self.graph is not None:
+        if self.graph is None:
+            self.status_label.setText("Please, load a graph first.")
+
+        else:
+            self.status_label.setText("Loading solution...")
+            self.status_label.resize(200, 40)
+            self.status_label.repaint()
+
             self.graph.solve_cvsp(
                 self.library_selector.currentText(),
                 self.formulation_selector.currentIndex(),
@@ -266,6 +306,8 @@ class UiMainWindow(object):
             )
 
             self.show_graph()
+
+            self.status_label.setText("Done.")
 
     def show_graph(self):
         """ Function to show the loaded graph. """
