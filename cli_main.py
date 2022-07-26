@@ -125,10 +125,13 @@ def solve_cvsp(input_file: Path = None,
                 input(f"File path (default = './{DEF_INPUT_FILE}'): ")
                 or DEF_INPUT_FILE)
 
-    if output_file is None and not quiet:
-        output_file = (
-            input(f"Export solution to (default = './{DEF_OUTPUT_FILE}'): ")
-            or DEF_OUTPUT_FILE)
+    if output_file is None:
+        if quiet:
+            output_file = DEF_OUTPUT_FILE
+        else:
+            output_file = (input(
+                f"Export solution to (default = './{DEF_OUTPUT_FILE}'): ")
+                           or DEF_OUTPUT_FILE)
 
     if library_name is None:
         if quiet:
