@@ -1,8 +1,8 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
-""" This program has the implementation of various formulations to solve the
-Capacitated Vertex Separator Problem (CVSP) on a graph through unilevel and
-bilevel approaches. """
+""" This program implements a Command Line Interface (CLI) to solve the
+Capacitated Vertex Separator Problem (CVSP) on a graph through various
+formulations using unilevel and bilevel approaches. """
 
 from math import inf
 

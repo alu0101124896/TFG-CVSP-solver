@@ -1,5 +1,8 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
+""" This program provides the implementation of the Graph class used to
+represent a loaded graph from a file containing it's definition and to provide
+an interface to solve the Capacitated Vertex Separator Problem (CVSP). """
 
 from pathlib import Path
 import sys
@@ -8,7 +11,7 @@ import matplotlib.pyplot as plt
 from matplotlib import use as mpl_use
 import networkx as nx
 
-from src.cvsp import cvsp_solver
+from .cvsp import cvsp_solver
 
 mpl_use('TkAgg', force=True)
 

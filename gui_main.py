@@ -1,5 +1,8 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
+""" This program implements a Graphical User Interface (GUI) to solve the
+Capacitated Vertex Separator Problem (CVSP) on a graph through various
+formulations using unilevel and bilevel approaches. """
 
 from pathlib import Path
 import sys
@@ -12,7 +15,10 @@ import matplotlib.pyplot as plt
 from matplotlib import use as mpl_use
 from PyQt5 import QtCore, QtWidgets
 
-from src.graph import Graph
+try:
+    from .src.graph import Graph
+except ImportError:
+    from src.graph import Graph
 
 mpl_use('Qt5Agg', force=True)
 

@@ -10,12 +10,15 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 from matplotlib import use as mpl_use
 
-from src.graph import Graph
+try:
+    from .src.graph import Graph
+except ImportError:
+    from src.graph import Graph
 
 mpl_use('Qt5Agg', force=True)
 
-DEF_INPUT_FILE = Path("./data/graph1.txt")
-DEF_OUTPUT_FILE = Path("./data/graph1-solution.json")
+DEF_INPUT_FILE = "./data/graph1.txt"
+DEF_OUTPUT_FILE = "./data/graph1-solution.json"
 DEF_K_VALUE = 3
 DEF_B_VALUE = 3
 DEF_LIBRARY = "gurobi"
@@ -93,10 +96,6 @@ def parse_cli_args():
 
     args = parser.parse_args()
 
-    if args.input_file:
-        args.input_file = Path(args.input_file)
-    if args.output_file:
-        args.output_file = Path(args.output_file)
     if args.formulation_index:
         args.formulation_index = int(args.formulation_index)
     if args.k_value:
@@ -107,8 +106,8 @@ def parse_cli_args():
     return args
 
 
-def solve_cvsp(input_file: Path = None,
-               output_file: Path = None,
+def solve_cvsp(input_file: str = None,
+               output_file: str = None,
                library_name: str = None,
                formulation_index: int = None,
                k_value: int = None,
@@ -122,7 +121,7 @@ def solve_cvsp(input_file: Path = None,
             input_file = DEF_INPUT_FILE
         else:
             input_file = (
-                input(f"File path (default = './{DEF_INPUT_FILE}'): ")
+                input(f"File path (default = '{DEF_INPUT_FILE}'): ")
                 or DEF_INPUT_FILE)
 
     if output_file is None:
@@ -130,7 +129,7 @@ def solve_cvsp(input_file: Path = None,
             output_file = DEF_OUTPUT_FILE
         else:
             output_file = (input(
-                f"Export solution to (default = './{DEF_OUTPUT_FILE}'): ")
+                f"Export solution to (default = '{DEF_OUTPUT_FILE}'): ")
                            or DEF_OUTPUT_FILE)
 
     if library_name is None:
@@ -164,7 +163,7 @@ def solve_cvsp(input_file: Path = None,
             b_value = int(
                 input(f"b value (default = '{DEF_B_VALUE}'): ") or DEF_B_VALUE)
 
-    graph = Graph(input_file)
+    graph = Graph(Path(input_file))
 
     graph.solve_cvsp(library_name, formulation_index - 1, k_value, b_value,
                      quiet)
@@ -181,7 +180,7 @@ def solve_cvsp(input_file: Path = None,
         print("Solution not found")
 
     if output_file is not None:
-        with open(output_file, 'w', encoding="utf-8-sig") as outfile:
+        with open(Path(output_file), 'w', encoding="utf-8-sig") as outfile:
             print(json.dumps(graph.cvsp_solution), file=outfile)
 
 

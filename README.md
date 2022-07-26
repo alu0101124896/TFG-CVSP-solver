@@ -13,12 +13,13 @@ To get a local copy up and running follow these simple example steps.
 
 1. Clone this repo:
    ```sh
-   git clone https://github.com/alu0101124896/TFG-Capacitated-Vertex-Separator-Problem.git
+   git clone https://github.com/alu0101124896/TFG-Capacitated-Vertex-Separator-Problem.git cvsp_package
    ```
+   Note: the name has been changed to be able to use it as a python package
 
 2. Move to the repo's main folder:
    ```sh
-   cd ./TFG-Capacitated-Vertex-Separator-Problem
+   cd ./cvsp_package
    ```
 
 3. Install required packages:
@@ -83,3 +84,20 @@ For the execution of this program you have the following alternatives:
       Suppress all normal cli output.
 
    If none of the previous arguments is introduced, the program will ask for them interactively, except if the "quiet" flag is active, which will make the program to use the default values on those that aren't provided.
+
+
+* Import as a package:
+   ```py
+   from cvsp_package import solve_cvsp
+
+   solve_cvsp(
+       input_file="./cvsp_package/data/graph1.txt",
+       output_file="./graph1-solution.json",
+       library_name="gurobi",
+       formulation_index=1,
+       k_value=3,
+       b_value=3,
+       no_gui=True,
+       quiet=True,
+   )
+   ```
