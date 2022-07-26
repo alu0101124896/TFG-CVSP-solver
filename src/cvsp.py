@@ -566,7 +566,7 @@ def formulation_3_lazy_gurobi(graph: nx.Graph,
     def sec_lazy(model, where):
         if where == GRB.Callback.MIPSOL:
             values = model.cbGetSolution(x)
-            w = list(node for node, value in values.items() if value == 0)
+            w = list(node for node, value in values.items() if value < 0.1)
             gw = graph.subgraph(w)
 
             if any((len(cc_nodes) > b_value)
@@ -576,11 +576,12 @@ def formulation_3_lazy_gurobi(graph: nx.Graph,
             else:
                 ow = n_bins_to_pack_gurobi(gw, b_value)
 
+            constraint_added = False
             if ow > k_value:
                 model.cbLazy(sum(x[v] for v in w) >= 1)
-                return True
+                constraint_added = True
 
-            return False
+            return constraint_added
 
         return True
 
@@ -679,7 +680,7 @@ def formulation_4_lazy_gurobi(graph: nx.Graph,
     def sec_lazy(model, where):
         if where == GRB.Callback.MIPSOL:
             values = model.cbGetSolution(x)
-            w = list(node for node, value in values.items() if value == 0)
+            w = list(node for node, value in values.items() if value < 0.1)
             gw = graph.subgraph(w)
 
             constraints_added = False
