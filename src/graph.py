@@ -1,8 +1,15 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
-""" This program provides the implementation of the Graph class used to
-represent a loaded graph from a file containing it's definition and to provide
-an interface to solve the Capacitated Vertex Separator Problem (CVSP). """
+"""
+File: graph.py
+Author: Sergio Tabares Hernández <alu0101124896@ull.edu.es>
+Since: Summer 2022
+College: University of La Laguna
+Degree: Computer Science - Bachelor's Degree Final Project
+Description: This program provides the implementation of the Graph class used
+ to represent a loaded graph from a file containing it's definition and to
+ provide an interface to solve the Capacitated Vertex Separator Problem (CVSP).
+"""
 
 from pathlib import Path
 import sys

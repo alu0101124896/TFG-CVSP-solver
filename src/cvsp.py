@@ -1,8 +1,15 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
-""" This program implements a Command Line Interface (CLI) to solve the
-Capacitated Vertex Separator Problem (CVSP) on a graph through various
-formulations using unilevel and bilevel approaches. """
+"""
+File: cvsp.py
+Author: Sergio Tabares Hernández <alu0101124896@ull.edu.es>
+Since: Summer 2022
+College: University of La Laguna
+Degree: Computer Science - Bachelor's Degree Final Project
+Description: This program calculates the optimal solution to the Capacitated
+ Vertex Separator Problem (CVSP) on a graph through various formulations using
+ unilevel and bilevel approaches.
+"""
 
 from math import inf
 
