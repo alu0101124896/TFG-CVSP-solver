@@ -2,3 +2,5 @@ gurobipy
 networkx
 matplotlib
 ortools
+pyqt5
+scipy
