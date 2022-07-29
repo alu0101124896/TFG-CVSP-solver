@@ -320,7 +320,10 @@ class UiMainWindow(object):
 
             self.show_graph()
 
-            self.status_label.setText("Done.")
+            if self.graph.cvsp_solution is None:
+                self.status_label.setText("Solution not found.")
+            else:
+                self.status_label.setText("Done.")
 
     def show_graph(self):
         """ Function to show the loaded graph. """

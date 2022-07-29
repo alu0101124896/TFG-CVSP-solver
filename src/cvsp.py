@@ -13,9 +13,14 @@ Description: This program calculates the optimal solution to the Capacitated
 
 from math import inf
 
-from gurobipy import GRB, Model
+from gurobipy import GRB, Model, StatusConstClass
 import networkx as nx
 from ortools.linear_solver import pywraplp
+
+STATUS_DICT = {
+    StatusConstClass.__dict__[k]: k
+    for k in StatusConstClass.__dict__.keys() if k[0] >= 'A' and k[0] <= 'Z'
+}
 
 
 def cvsp_solver(graph: nx.Graph,
@@ -396,24 +401,28 @@ def formulation_1_gurobi(graph: nx.Graph,
         print(f"\nSolution found in {model.Runtime} seconds")
 
     # Print and Parse the solution found.
-    # if solution is optimal:
-    solution = {'S': [], 'V': [[] for _ in K]}
+    if STATUS_DICT[model.status] == "OPTIMAL":
+        solution = {'S': [], 'V': [[] for _ in K]}
 
-    for v in V:
-        n_shores = 0
+        for v in V:
+            n_shores = 0
 
-        for i in K:
-            variable = e[i][v]
-            # assert isinstance(variable, GRB.BINARY)
+            for i in K:
+                variable = e[i][v]
 
-            if variable.x == 1:
-                solution['V'][i].append(v)
-                n_shores += 1
+                if variable.x == 1:
+                    solution['V'][i].append(v)
+                    n_shores += 1
 
-        if n_shores == 0:
-            solution['S'].append(v)
+            if n_shores == 0:
+                solution['S'].append(v)
 
-    return solution
+        return solution
+
+    if not quiet:
+        print("The problem does not have an optimal solution.")
+
+    return None
 
 
 def formulation_2_gurobi(graph: nx.Graph,
@@ -472,24 +481,28 @@ def formulation_2_gurobi(graph: nx.Graph,
         print(f"\nSolution found in {model.Runtime} seconds")
 
     # Print and Parse the solution found.
-    # if solution is optimal:
-    solution = {'S': [], 'V': [[] for _ in K]}
+    if STATUS_DICT[model.status] == "OPTIMAL":
+        solution = {'S': [], 'V': [[] for _ in K]}
 
-    for v in V:
-        n_shores = 0
+        for v in V:
+            n_shores = 0
 
-        for i in K:
-            variable = e[i][v]
-            # assert isinstance(variable, GRB.BINARY)
+            for i in K:
+                variable = e[i][v]
 
-            if variable.x == 1:
-                solution['V'][i].append(v)
-                n_shores += 1
+                if variable.x == 1:
+                    solution['V'][i].append(v)
+                    n_shores += 1
 
-        if n_shores == 0:
-            solution['S'].append(v)
+            if n_shores == 0:
+                solution['S'].append(v)
 
-    return solution
+        return solution
+
+    if not quiet:
+        print("The problem does not have an optimal solution.")
+
+    return None
 
 
 def formulation_3_gurobi(graph: nx.Graph,
@@ -534,17 +547,21 @@ def formulation_3_gurobi(graph: nx.Graph,
         print(f"\nSolution found in {model.Runtime} seconds")
 
     # Print and Parse the solution found.
-    # if solution is optimal:
-    solution = []
+    if STATUS_DICT[model.status] == "OPTIMAL":
+        solution = []
 
-    for v in V:
-        variable = x[v]
-        # assert isinstance(variable, GRB.BINARY)
+        for v in V:
+            variable = x[v]
 
-        if variable.x == 1:
-            solution.append(v)
+            if variable.x == 1:
+                solution.append(v)
 
-    return solution
+        return solution
+
+    if not quiet:
+        print("The problem does not have an optimal solution.")
+
+    return None
 
 
 def formulation_3_lazy_gurobi(graph: nx.Graph,
@@ -599,17 +616,21 @@ def formulation_3_lazy_gurobi(graph: nx.Graph,
         print(f"\nSolution found in {model.Runtime} seconds")
 
     # Print and Parse the solution found.
-    # if solution is optimal:
-    solution = []
+    if STATUS_DICT[model.status] == "OPTIMAL":
+        solution = []
 
-    for v in V:
-        variable = x[v]
-        # assert isinstance(variable, GRB.BINARY)
+        for v in V:
+            variable = x[v]
 
-        if variable.x == 1:
-            solution.append(v)
+            if variable.x == 1:
+                solution.append(v)
 
-    return solution
+        return solution
+
+    if not quiet:
+        print("The problem does not have an optimal solution.")
+
+    return None
 
 
 def formulation_4_gurobi(graph: nx.Graph,
@@ -648,17 +669,21 @@ def formulation_4_gurobi(graph: nx.Graph,
         print(f"\nSolution found in {model.Runtime} seconds")
 
     # Print and Parse the solution found.
-    # if solution is optimal:
-    solution = []
+    if STATUS_DICT[model.status] == "OPTIMAL":
+        solution = []
 
-    for v in V:
-        variable = x[v]
-        # assert isinstance(variable, GRB.BINARY)
+        for v in V:
+            variable = x[v]
 
-        if variable.x == 1:
-            solution.append(v)
+            if variable.x == 1:
+                solution.append(v)
 
-    return solution
+        return solution
+
+    if not quiet:
+        print("The problem does not have an optimal solution.")
+
+    return None
 
 
 def formulation_4_lazy_gurobi(graph: nx.Graph,
@@ -707,17 +732,21 @@ def formulation_4_lazy_gurobi(graph: nx.Graph,
         print(f"\nSolution found in {model.Runtime} seconds")
 
     # Print and Parse the solution found.
-    # if solution is optimal:
-    solution = []
+    if STATUS_DICT[model.status] == "OPTIMAL":
+        solution = []
 
-    for v in V:
-        variable = x[v]
-        # assert isinstance(variable, GRB.BINARY)
+        for v in V:
+            variable = x[v]
 
-        if variable.x == 1:
-            solution.append(v)
+            if variable.x == 1:
+                solution.append(v)
 
-    return solution
+        return solution
+
+    if not quiet:
+        print("The problem does not have an optimal solution.")
+
+    return None
 
 
 def subsets(nodes: list[str]) -> list[list[str]]:
@@ -830,20 +859,23 @@ def n_bins_to_pack_gurobi(graph: nx.Graph, bin_size: int) -> int:
     model.optimize()
 
     # Print and Parse the solution found.
-    # if solution is optimal:
-    num_bins = 0
+    if STATUS_DICT[model.status] == "OPTIMAL":
+        num_bins = 0
 
-    for j in range(len(graph.nodes())):
-        if y[j].x == 1:
-            bin_items = []
-            bin_weight = 0
+        for j in range(len(graph.nodes())):
+            if y[j].x == 1:
+                bin_items = []
+                bin_weight = 0
 
-            for i in graph.nodes():
-                if x[i, j].x > 0:
-                    bin_items.append(i)
-                    bin_weight += 1
+                for i in graph.nodes():
+                    if x[i, j].x > 0:
+                        bin_items.append(i)
+                        bin_weight += 1
 
-            if bin_weight > 0:
-                num_bins += 1
+                if bin_weight > 0:
+                    num_bins += 1
+
+    else:
+        num_bins = inf
 
     return num_bins
