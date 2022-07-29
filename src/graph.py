@@ -11,6 +11,7 @@ Description: This program provides the implementation of the Graph class used
  provide an interface to solve the Capacitated Vertex Separator Problem (CVSP).
 """
 
+import json
 from pathlib import Path
 import sys
 
@@ -33,7 +34,8 @@ REMAINING_NODES_LINE_STYLE = "solid"
 
 class Graph:
     """ Class to represent a NetworkX Graph. """
-    def __init__(self, input_file: Path):
+
+    def __init__(self, input_file: str = None):
 
         self.nx_graph = None
         self.cvsp_solution = None
@@ -43,15 +45,14 @@ class Graph:
         self.is_directed = None
         self.edges_data = None
 
-        self.definition_file = input_file
-        self.build_graph()
+        self.build_graph(input_file)
 
         self.layout = nx.drawing.layout.kamada_kawai_layout(self.nx_graph)
 
-    def build_graph(self):
+    def build_graph(self, input_file: str):
         """ Function to build a graph from the given data. """
 
-        with open(self.definition_file, 'r', encoding="utf-8-sig") as file:
+        with open(Path(input_file), 'r', encoding="utf-8-sig") as file:
             raw_data = file.read()
             self.parse_data(raw_data)
 
@@ -165,3 +166,26 @@ class Graph:
 
             else:
                 sys.exit("Error: unknown solution format")
+
+    def export_solution(self, output_file):
+        """ Function to export the solution to a file with a json format. """
+
+        with open(Path(output_file), 'w', encoding="utf-8-sig") as outfile:
+            print(json.dumps(self.cvsp_solution), file=outfile)
+
+
+    def print_solution(self):
+        """ Function to print the solution into the terminal in a more
+        comprehensive way. """
+
+        print("\nSolution:")
+
+        if isinstance(self.cvsp_solution, dict):
+            print(f"  S: {self.cvsp_solution['S']}")
+            print("  V: [")
+            for shore in self.cvsp_solution['V']:
+                print(f"    {shore},")
+            print("  ]")
+
+        elif isinstance(self.cvsp_solution, list):
+            print(f"  S: {self.cvsp_solution}")

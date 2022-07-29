@@ -12,8 +12,6 @@ Description: This program implements a Command Line Interface (CLI) to solve
 """
 
 import argparse
-import json
-from pathlib import Path
 
 import matplotlib.pyplot as plt
 from matplotlib import use as mpl_use
@@ -171,7 +169,7 @@ def solve_cvsp(input_file: str = None,
             b_value = int(
                 input(f"b value (default = '{DEF_B_VALUE}'): ") or DEF_B_VALUE)
 
-    graph = Graph(Path(input_file))
+    graph = Graph(input_file)
 
     graph.solve_cvsp(library_name, formulation_index - 1, k_value, b_value,
                      quiet)
@@ -182,31 +180,13 @@ def solve_cvsp(input_file: str = None,
             plt.show()
 
         elif not quiet:
-            print_solution(graph.cvsp_solution)
+            graph.print_solution()
 
     elif not quiet:
         print("Solution not found")
 
     if output_file is not None:
-        with open(Path(output_file), 'w', encoding="utf-8-sig") as outfile:
-            print(json.dumps(graph.cvsp_solution), file=outfile)
-
-
-def print_solution(solution):
-    """ Function to print the solution into the terminal in a more
-    comprehensive way. """
-
-    print("\nSolution:")
-
-    if isinstance(solution, dict):
-        print(f"  S: {solution['S']}")
-        print("  V: [")
-        for shore in solution['V']:
-            print(f"    {shore},")
-        print("  ]")
-
-    elif isinstance(solution, list):
-        print(f"  S: {solution}")
+        graph.export_solution(output_file)
 
 
 if __name__ == "__main__":

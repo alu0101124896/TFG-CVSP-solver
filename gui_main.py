@@ -11,7 +11,6 @@ Description: This program implements a Graphical User Interface (GUI) to solve
  formulations using unilevel and bilevel approaches.
 """
 
-from pathlib import Path
 import sys
 
 from matplotlib.backends.backend_qt5agg import (FigureCanvasQTAgg as
@@ -282,7 +281,7 @@ class UiMainWindow(object):
     def set_input_file(self, input_file: str):
         """ Function to set a new input file path. """
 
-        self.input_file = Path(input_file)
+        self.input_file = input_file
 
         if len(input_file) > FILENAME_LEN_THRESHOLD:
             ipf_str = "..." + input_file[-FILENAME_LEN_THRESHOLD:]
