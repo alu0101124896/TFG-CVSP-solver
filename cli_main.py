@@ -14,14 +14,11 @@ Description: This program implements a Command Line Interface (CLI) to solve
 import argparse
 
 import matplotlib.pyplot as plt
-from matplotlib import use as mpl_use
 
 try:
     from .src.graph import Graph
 except ImportError:
     from src.graph import Graph
-
-mpl_use('Qt5Agg', force=True)
 
 DEF_INPUT_FILE = "./data/graph1.txt"
 DEF_OUTPUT_FILE = "./data/graph1-solution.json"
@@ -126,17 +123,16 @@ def solve_cvsp(input_file: str = None,
         if quiet:
             input_file = DEF_INPUT_FILE
         else:
-            input_file = (
-                input(f"File path (default = '{DEF_INPUT_FILE}'): ")
-                or DEF_INPUT_FILE)
+            input_file = (input(f"File path (default = '{DEF_INPUT_FILE}'): ")
+                          or DEF_INPUT_FILE)
 
     if output_file is None:
         if quiet:
             output_file = DEF_OUTPUT_FILE
         else:
-            output_file = (input(
-                f"Export solution to (default = '{DEF_OUTPUT_FILE}'): ")
-                           or DEF_OUTPUT_FILE)
+            output_file = (
+                input(f"Export solution to (default = '{DEF_OUTPUT_FILE}'): ")
+                or DEF_OUTPUT_FILE)
 
     if library_name is None:
         if quiet:

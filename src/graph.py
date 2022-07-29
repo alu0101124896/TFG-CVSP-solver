@@ -16,12 +16,9 @@ from pathlib import Path
 import sys
 
 import matplotlib.pyplot as plt
-from matplotlib import use as mpl_use
 import networkx as nx
 
 from .cvsp import cvsp_solver
-
-mpl_use('TkAgg', force=True)
 
 EXTRACTED_NODES_COLOR = "silver"
 EXTRACTED_SHORES_LINE_WIDTH = 1.0
@@ -83,7 +80,8 @@ class Graph:
             edges_raw_data.pop()
 
         self.edges_data = [
-            edge_raw_data.split(', ') for edge_raw_data in edges_raw_data
+            tuple(edge_raw_data.split(', '))
+            for edge_raw_data in edges_raw_data
         ]
 
     def solve_cvsp(self, library_name: str, formulation_index: int,
@@ -172,7 +170,6 @@ class Graph:
 
         with open(Path(output_file), 'w', encoding="utf-8-sig") as outfile:
             print(json.dumps(self.cvsp_solution), file=outfile)
-
 
     def print_solution(self):
         """ Function to print the solution into the terminal in a more

@@ -1,4 +1,8 @@
+# Personal vscode settings
 .vscode
+
+# cProfile output
+profile.out
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
