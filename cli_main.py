@@ -46,10 +46,10 @@ def main():
     solve_cvsp(
         args.input_file,
         args.output_file,
-        args.k_value,
-        args.b_value,
         args.library_name,
         args.formulation_index,
+        args.k_value,
+        args.b_value,
         args.no_gui,
         args.quiet,
     )
