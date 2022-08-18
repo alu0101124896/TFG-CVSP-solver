@@ -11,6 +11,7 @@ Description: This program calculates the optimal solution to the Capacitated
  unilevel and bilevel approaches.
 """
 
+from itertools import combinations
 from math import inf
 
 from gurobipy import GRB, Model, StatusConstClass
@@ -245,7 +246,10 @@ def formulation_3_ortools(graph: nx.Graph,
     solver.Minimize(sum(x[v] for v in V))
 
     # Add the "3b" constraints.
-    W = subsets(list(V))
+    W = []
+    for subset_size in range(1, len(V)):
+        W.extend(combinations(V, subset_size))
+
     for w in W:
         gw = graph.subgraph(w)
 
@@ -313,7 +317,10 @@ def formulation_4_ortools(graph: nx.Graph,
     solver.Minimize(sum(x[v] for v in V))
 
     # Add the "4" constraints.
-    W = subsets(list(V))
+    W = []
+    for subset_size in range(1, len(V)):
+        W.extend(combinations(V, subset_size))
+
     for w in W:
         gw = graph.subgraph(w)
 
@@ -526,7 +533,10 @@ def formulation_3_gurobi(graph: nx.Graph,
     model.setObjective(sum(x[v] for v in V), GRB.MINIMIZE)
 
     # Add the "3b" constraints.
-    W = subsets(list(V))
+    W = []
+    for subset_size in range(1, len(V)):
+        W.extend(combinations(V, subset_size))
+
     for w in W:
         gw = graph.subgraph(w)
 
@@ -654,7 +664,10 @@ def formulation_4_gurobi(graph: nx.Graph,
     model.setObjective(sum(x[v] for v in V), GRB.MINIMIZE)
 
     # Add the "4" constraints.
-    W = subsets(list(V))
+    W = []
+    for subset_size in range(1, len(V)):
+        W.extend(combinations(V, subset_size))
+
     for w in W:
         gw = graph.subgraph(w)
 
@@ -747,18 +760,6 @@ def formulation_4_lazy_gurobi(graph: nx.Graph,
         print("The problem does not have an optimal solution.")
 
     return None
-
-
-def subsets(nodes: list[str]) -> list[list[str]]:
-    """ Auxiliary function to get all combinations with the given nodes. """
-
-    if len(nodes) == 0:
-        return [[]]
-
-    x = subsets(nodes[1:])
-    z = [[nodes[0]] + y for y in x] + x
-
-    return z
 
 
 def n_bins_to_pack_ortools(graph: nx.Graph, bin_size: int) -> int:
