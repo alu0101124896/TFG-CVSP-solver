@@ -23,7 +23,7 @@ except ImportError:
     from src.graph import Graph
 
 DEF_INPUT_FILE = "./data/graph1.txt"
-# Output file format: "./[input_file_path]/[input_file_stem]-solution-[timestamp].json"
+# Output file format: "./[input_file_path]/[input_file_stem]_solution_[timestamp].json"
 DEF_K_VALUE = 3
 DEF_B_VALUE = 3
 DEF_LIBRARY = "gurobi"
@@ -131,7 +131,7 @@ def solve_cvsp(input_file: str = None,
     if output_file is None:
         input_file_path = Path(input_file)
         def_output_file = ("./" + str(input_file_path.parent) + "/" +
-                           input_file_path.stem + "-solution-" +
+                           input_file_path.stem + "_solution_" +
                            datetime.now().strftime("%Y-%m-%d_%H-%M-%S") +
                            ".json")
         if quiet:

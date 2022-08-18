@@ -33,17 +33,25 @@ class Graph:
     """ Class to represent a NetworkX Graph. """
 
     def __init__(self, input_file: str = None):
+        if input_file is None:
+            self.is_directed = False
 
-        self.nx_graph = None
+            self.n_nodes = 50
+            self.n_edges = 100
+            self.nx_graph = nx.gnm_random_graph(self.n_nodes,
+                                                self.n_edges,
+                                                directed=self.is_directed)
+
+            # self.nx_graph = nx.grid_2d_graph(20, 20)
+            # self.n_nodes = self.nx_graph.number_of_nodes()
+            # self.n_edges = self.nx_graph.number_of_edges()
+
+            self.edges_data = self.nx_graph.edges()
+
+        else:
+            self.build_graph(input_file)
+
         self.cvsp_solution = None
-
-        self.n_nodes = None
-        self.n_edges = None
-        self.is_directed = None
-        self.edges_data = None
-
-        self.build_graph(input_file)
-
         self.layout = nx.drawing.layout.kamada_kawai_layout(self.nx_graph)
 
     def build_graph(self, input_file: str):
@@ -164,6 +172,18 @@ class Graph:
 
             else:
                 sys.exit("Error: unknown solution format")
+
+    def export_definition(self, output_file):
+        """ Function to export the current graph definition to a file. """
+
+        with open(Path(output_file), 'w', encoding="utf-8-sig") as outfile:
+            print(self.n_nodes,
+                  self.n_edges,
+                  1 if self.is_directed else 0,
+                  sep=", ",
+                  file=outfile)
+            for edge in self.edges_data:
+                print(*edge, sep=", ", file=outfile)
 
     def export_solution(self, output_file):
         """ Function to export the solution to a file with a json format. """
