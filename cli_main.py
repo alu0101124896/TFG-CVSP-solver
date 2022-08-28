@@ -41,7 +41,7 @@ REMAINING_NODES_LINE_STYLE = "solid"
 
 
 def main():
-    """ Entry point for the main program. """
+    """ Entry point for the main cli program. """
 
     args = parse_cli_args()
 
@@ -80,7 +80,7 @@ def parse_cli_args():
                         default=None,
                         help="select a problem formulation to use. " +
                         "For Google OR-Tools library: [1-4]. " +
-                        "For Gurobi Optimization library: [1-6]")
+                        "For Gurobi Optimization library: [1-8]")
 
     parser.add_argument("-k",
                         "--k-value",

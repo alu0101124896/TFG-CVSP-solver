@@ -32,14 +32,14 @@ WIN_HEIGHT = 630
 
 FORMULATIONS = {
     "ortools": ["1", "2", "3", "4"],
-    "gurobi": ["1", "2", "3", "3 lazy", "4", "4 lazy"],
+    "gurobi": ["1", "1 alt b", "1 alt c", "2", "3", "3 lazy", "4", "4 lazy"],
 }
 
 FILENAME_LEN_THRESHOLD = 70
 
 
 def main():
-    """ Main window. """
+    """ Entry point for the main gui program. """
 
     app = QtWidgets.QApplication(sys.argv)
     main_window = QtWidgets.QMainWindow()

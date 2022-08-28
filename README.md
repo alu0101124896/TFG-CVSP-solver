@@ -65,7 +65,7 @@ For the execution of this program you have the following alternatives:
 
       Select a problem formulation to use:
       * For Google OR-Tools library: [1-4]
-      * For Gurobi Optimization library: [1-6]
+      * For Gurobi Optimization library: [1-8]
 
    * `[--k-value | -k] K_VALUE`:
 

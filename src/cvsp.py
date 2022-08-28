@@ -42,6 +42,8 @@ def cvsp_solver(graph: nx.Graph,
         ],
         "gurobi": [
             formulation_1_gurobi,
+            formulation_1_alt_b_gurobi,
+            formulation_1_alt_c_gurobi,
             formulation_2_gurobi,
             formulation_3_gurobi,
             formulation_3_lazy_gurobi,
@@ -396,6 +398,161 @@ def formulation_1_gurobi(graph: nx.Graph,
     for i in K:
         for w, v in E:
             model.addConstr(e[i][w] + sum(e[j][v] for j in K if i != j) <= 1)
+
+    # "1d" constraints.
+    for i in K:
+        model.addConstr(sum(e[i][v] for v in V) <= b_value)
+
+    # Solve the system.
+    model.optimize()
+
+    if not quiet:
+        print(f"\nSolution found in {model.Runtime} seconds")
+
+    # Print and Parse the solution found.
+    if STATUS_DICT[model.status] == "OPTIMAL":
+        solution = {'S': [], 'V': [[] for _ in K]}
+
+        for v in V:
+            n_shores = 0
+
+            for i in K:
+                variable = e[i][v]
+
+                if variable.x == 1:
+                    solution['V'][i].append(v)
+                    n_shores += 1
+
+            if n_shores == 0:
+                solution['S'].append(v)
+
+        return solution
+
+    if not quiet:
+        print("The problem does not have an optimal solution.")
+
+    return None
+
+
+def formulation_1_alt_b_gurobi(
+        graph: nx.Graph,
+        k_value: int,
+        b_value: int,
+        quiet: bool = False) -> (dict[str, list] | None):
+    """ Teacher's alternative "b" formulation. """
+
+    K = range(k_value)
+    V = graph.nodes()
+    E = graph.edges()
+
+    # Create a new model.
+    model = Model()
+    model.Params.OutputFlag = 0
+
+    # Create the binary variables ("1e" constraints)
+    e = []
+    for i in K:
+        shore_i = {}
+        for v in V:
+            shore_i.update(
+                {v: model.addVar(vtype=GRB.BINARY, name=f"ξ_{i}_{v}")})
+        e.append(shore_i)
+
+    # Add the "1a" objective function.
+    model.setObjective(sum(e[i][v] for i in K for v in V), GRB.MAXIMIZE)
+
+    # Add the formulation constraints.
+    # "1b" constraints.
+    for v in V:
+        model.addConstr(sum(e[i][v] for i in K) <= 1)
+
+    # alternative version "b" of "1c" constraints.
+    for i in K:
+        for j in K:
+            if i != j:
+                for w, v in E:
+                    model.addConstr(e[i][w] + e[j][v] <= 1)
+
+    # "1d" constraints.
+    for i in K:
+        model.addConstr(sum(e[i][v] for v in V) <= b_value)
+
+    # Solve the system.
+    model.optimize()
+
+    if not quiet:
+        print(f"\nSolution found in {model.Runtime} seconds")
+
+    # Print and Parse the solution found.
+    if STATUS_DICT[model.status] == "OPTIMAL":
+        solution = {'S': [], 'V': [[] for _ in K]}
+
+        for v in V:
+            n_shores = 0
+
+            for i in K:
+                variable = e[i][v]
+
+                if variable.x == 1:
+                    solution['V'][i].append(v)
+                    n_shores += 1
+
+            if n_shores == 0:
+                solution['S'].append(v)
+
+        return solution
+
+    if not quiet:
+        print("The problem does not have an optimal solution.")
+
+    return None
+
+
+def formulation_1_alt_c_gurobi(
+        graph: nx.Graph,
+        k_value: int,
+        b_value: int,
+        quiet: bool = False) -> (dict[str, list] | None):
+    """ Teacher's alternative "c" formulation. """
+
+    K = range(k_value)
+    V = graph.nodes()
+    E = graph.edges()
+
+    # Create a new model.
+    model = Model()
+    model.Params.OutputFlag = 0
+
+    # Create the binary variables ("1e" constraints)
+    e = []
+    for i in K:
+        shore_i = {}
+        for v in V:
+            shore_i.update(
+                {v: model.addVar(vtype=GRB.BINARY, name=f"ξ_{i}_{v}")})
+        e.append(shore_i)
+
+    # Add the "1a" objective function.
+    model.setObjective(sum(e[i][v] for i in K for v in V), GRB.MAXIMIZE)
+
+    # Add the formulation constraints.
+    # "1b" constraints.
+    for v in V:
+        model.addConstr(sum(e[i][v] for i in K) <= 1)
+
+    # alternative version "c" of "1c" constraints.
+    max_subset_size = k_value
+    # max_subset_size = 2  # Do not generate all subsets
+
+    for subset_size in range(1, max_subset_size + 1):
+        L = combinations(K, subset_size)
+
+        for l in L:
+            for w, v in E:
+                model.addConstr(
+                    sum(e[k1][w]
+                        for k1 in l) + sum(e[k2][v]
+                                           for k2 in (set(K) - set(l))) <= 1)
 
     # "1d" constraints.
     for i in K:
