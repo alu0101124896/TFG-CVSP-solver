@@ -11,7 +11,6 @@ Description: This program provides the implementation of the Graph class used
  provide an interface to solve the Capacitated Vertex Separator Problem (CVSP).
 """
 
-import json
 from pathlib import Path
 import sys
 
@@ -110,68 +109,39 @@ class Graph:
 
         if self.cvsp_solution is None:
             nx.draw_networkx(self.nx_graph, self.layout)
+            return
+
+        if isinstance(self.cvsp_solution, list):
+            nx.draw_networkx(self.nx_graph,
+                             self.layout,
+                             nodelist=self.cvsp_solution,
+                             edgelist=self.nx_graph.edges(self.cvsp_solution),
+                             node_color=EXTRACTED_NODES_COLOR,
+                             width=EXTRACTED_SHORES_LINE_WIDTH,
+                             style=EXTRACTED_NODES_LINE_STYLE)
+
+            graph_copy = self.nx_graph.copy()
+            for node in self.cvsp_solution:
+                graph_copy.remove_node(node)
+
+            ccc_nodes = [
+                graph_copy.subgraph(cc).copy()
+                for cc in nx.connected_components(graph_copy)
+            ]
+            ccc_edges = [graph_copy.subgraph(cc).edges() for cc in ccc_nodes]
+
+            for cc_nodes, cc_edges, color in zip(ccc_nodes, ccc_edges,
+                                                 REMAINING_SHORES_COLORS):
+                nx.draw_networkx(graph_copy,
+                                 self.layout,
+                                 nodelist=cc_nodes,
+                                 edgelist=cc_edges,
+                                 node_color=color,
+                                 width=REMAINING_SHORES_LINE_WIDTH,
+                                 style=REMAINING_NODES_LINE_STYLE)
 
         else:
-            if isinstance(self.cvsp_solution, dict):
-                nx.draw_networkx(self.nx_graph,
-                                 self.layout,
-                                 nodelist=self.cvsp_solution['S'],
-                                 edgelist=self.nx_graph.edges(
-                                     self.cvsp_solution['S']),
-                                 node_color=EXTRACTED_NODES_COLOR,
-                                 width=EXTRACTED_SHORES_LINE_WIDTH,
-                                 style=EXTRACTED_NODES_LINE_STYLE)
-
-                v_edges = [
-                    self.nx_graph.subgraph(vi).edges()
-                    for vi in self.cvsp_solution['V']
-                ]
-
-                for vi_nodes, vi_edges, color in zip(self.cvsp_solution['V'],
-                                                     v_edges,
-                                                     REMAINING_SHORES_COLORS):
-                    nx.draw_networkx(self.nx_graph,
-                                     self.layout,
-                                     nodelist=vi_nodes,
-                                     edgelist=vi_edges,
-                                     node_color=color,
-                                     width=REMAINING_SHORES_LINE_WIDTH,
-                                     style=REMAINING_NODES_LINE_STYLE)
-
-            elif isinstance(self.cvsp_solution, list):
-                nx.draw_networkx(self.nx_graph,
-                                 self.layout,
-                                 nodelist=self.cvsp_solution,
-                                 edgelist=self.nx_graph.edges(
-                                     self.cvsp_solution),
-                                 node_color=EXTRACTED_NODES_COLOR,
-                                 width=EXTRACTED_SHORES_LINE_WIDTH,
-                                 style=EXTRACTED_NODES_LINE_STYLE)
-
-                graph_copy = self.nx_graph.copy()
-                for node in self.cvsp_solution:
-                    graph_copy.remove_node(node)
-
-                ccc_nodes = [
-                    graph_copy.subgraph(cc).copy()
-                    for cc in nx.connected_components(graph_copy)
-                ]
-                ccc_edges = [
-                    graph_copy.subgraph(cc).edges() for cc in ccc_nodes
-                ]
-
-                for cc_nodes, cc_edges, color in zip(ccc_nodes, ccc_edges,
-                                                     REMAINING_SHORES_COLORS):
-                    nx.draw_networkx(graph_copy,
-                                     self.layout,
-                                     nodelist=cc_nodes,
-                                     edgelist=cc_edges,
-                                     node_color=color,
-                                     width=REMAINING_SHORES_LINE_WIDTH,
-                                     style=REMAINING_NODES_LINE_STYLE)
-
-            else:
-                sys.exit("Error: unknown solution format")
+            sys.exit("Error: unknown solution format")
 
     def export_definition(self, output_file):
         """ Function to export the current graph definition to a file. """
@@ -186,10 +156,10 @@ class Graph:
                 print(*edge, sep=", ", file=outfile)
 
     def export_solution(self, output_file):
-        """ Function to export the solution to a file with a json format. """
+        """ Function to export the solution to a file. """
 
         with open(Path(output_file), 'w', encoding="utf-8-sig") as outfile:
-            print(json.dumps(self.cvsp_solution), file=outfile)
+            print(*self.cvsp_solution, sep=", ", file=outfile)
 
     def print_solution(self):
         """ Function to print the solution into the terminal in a more

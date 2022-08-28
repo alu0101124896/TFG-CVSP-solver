@@ -116,7 +116,7 @@ def formulation_1_ortools(graph: nx.Graph,
 
     # Print and Parse the solution found.
     if status == pywraplp.Solver.OPTIMAL:
-        solution = {'S': [], 'V': [[] for _ in K]}
+        solution = []
 
         for v in V:
             n_shores = 0
@@ -126,11 +126,10 @@ def formulation_1_ortools(graph: nx.Graph,
                 assert isinstance(variable, pywraplp.Variable)
 
                 if variable.solution_value() == 1:
-                    solution['V'][i].append(v)
                     n_shores += 1
 
             if n_shores == 0:
-                solution['S'].append(v)
+                solution.append(v)
 
         return solution
 
@@ -203,7 +202,7 @@ def formulation_2_ortools(graph: nx.Graph,
 
     # Print and Parse the solution found.
     if status == pywraplp.Solver.OPTIMAL:
-        solution = {'S': [], 'V': [[] for _ in K]}
+        solution = []
 
         for v in V:
             n_shores = 0
@@ -213,11 +212,10 @@ def formulation_2_ortools(graph: nx.Graph,
                 assert isinstance(variable, pywraplp.Variable)
 
                 if variable.solution_value() == 1:
-                    solution['V'][i].append(v)
                     n_shores += 1
 
             if n_shores == 0:
-                solution['S'].append(v)
+                solution.append(v)
 
         return solution
 
@@ -411,7 +409,7 @@ def formulation_1_gurobi(graph: nx.Graph,
 
     # Print and Parse the solution found.
     if STATUS_DICT[model.status] == "OPTIMAL":
-        solution = {'S': [], 'V': [[] for _ in K]}
+        solution = []
 
         for v in V:
             n_shores = 0
@@ -420,11 +418,10 @@ def formulation_1_gurobi(graph: nx.Graph,
                 variable = e[i][v]
 
                 if variable.x == 1:
-                    solution['V'][i].append(v)
                     n_shores += 1
 
             if n_shores == 0:
-                solution['S'].append(v)
+                solution.append(v)
 
         return solution
 
@@ -485,7 +482,7 @@ def formulation_1_alt_b_gurobi(
 
     # Print and Parse the solution found.
     if STATUS_DICT[model.status] == "OPTIMAL":
-        solution = {'S': [], 'V': [[] for _ in K]}
+        solution = []
 
         for v in V:
             n_shores = 0
@@ -494,11 +491,10 @@ def formulation_1_alt_b_gurobi(
                 variable = e[i][v]
 
                 if variable.x == 1:
-                    solution['V'][i].append(v)
                     n_shores += 1
 
             if n_shores == 0:
-                solution['S'].append(v)
+                solution.append(v)
 
         return solution
 
@@ -566,7 +562,7 @@ def formulation_1_alt_c_gurobi(
 
     # Print and Parse the solution found.
     if STATUS_DICT[model.status] == "OPTIMAL":
-        solution = {'S': [], 'V': [[] for _ in K]}
+        solution = []
 
         for v in V:
             n_shores = 0
@@ -575,11 +571,10 @@ def formulation_1_alt_c_gurobi(
                 variable = e[i][v]
 
                 if variable.x == 1:
-                    solution['V'][i].append(v)
                     n_shores += 1
 
             if n_shores == 0:
-                solution['S'].append(v)
+                solution.append(v)
 
         return solution
 
@@ -646,7 +641,7 @@ def formulation_2_gurobi(graph: nx.Graph,
 
     # Print and Parse the solution found.
     if STATUS_DICT[model.status] == "OPTIMAL":
-        solution = {'S': [], 'V': [[] for _ in K]}
+        solution = []
 
         for v in V:
             n_shores = 0
@@ -655,11 +650,10 @@ def formulation_2_gurobi(graph: nx.Graph,
                 variable = e[i][v]
 
                 if variable.x == 1:
-                    solution['V'][i].append(v)
                     n_shores += 1
 
             if n_shores == 0:
-                solution['S'].append(v)
+                solution.append(v)
 
         return solution
 

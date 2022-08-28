@@ -93,7 +93,7 @@ For the execution of this program you have the following alternatives:
 
    solve_cvsp(
        input_file="./cvsp_package/data/graph1.txt",
-       output_file="./graph1-solution.json",
+       output_file="./graph1-solution.txt",
        library_name="gurobi",
        formulation_index=1,
        k_value=3,
