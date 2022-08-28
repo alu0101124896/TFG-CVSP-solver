@@ -1,6 +1,7 @@
 # Capacitated Vertex Separation Problem
 
-This program calculates the optimal solution to the Capacitated Vertex Separator Problem (CVSP) on a graph through unilevel and bilevel approaches.
+This program calculates the optimal solution to the Capacitated Vertex Separator Problem (CVSP) on a graph through various
+ formulations using integer optimization approaches.
 
 
 ## Getting Started

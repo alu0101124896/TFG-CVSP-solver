@@ -8,7 +8,7 @@ College: University of La Laguna
 Degree: Computer Science - Bachelor's Degree Final Project
 Description: This program implements a Command Line Interface (CLI) to solve
  the Capacitated Vertex Separator Problem (CVSP) on a graph through various
- formulations using unilevel and bilevel approaches.
+ formulations using integer optimization approaches.
 """
 
 import argparse
@@ -60,7 +60,10 @@ def main():
 def parse_cli_args():
     """ Function to parse cli's argument flags and their assigned values. """
 
-    parser = argparse.ArgumentParser(description="Test program")
+    parser = argparse.ArgumentParser(
+        description="This program calculates the optimal solution to the " +
+        "Capacitated Vertex Separator Problem (CVSP) on a graph through " +
+        "formulations using integer optimization approaches.")
 
     parser.add_argument("-i",
                         "--input-file",

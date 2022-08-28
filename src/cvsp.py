@@ -8,7 +8,7 @@ College: University of La Laguna
 Degree: Computer Science - Bachelor's Degree Final Project
 Description: This program calculates the optimal solution to the Capacitated
  Vertex Separator Problem (CVSP) on a graph through various formulations using
- unilevel and bilevel approaches.
+ integer optimization approaches.
 """
 
 from itertools import combinations

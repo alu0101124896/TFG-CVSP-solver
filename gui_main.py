@@ -8,7 +8,7 @@ College: University of La Laguna
 Degree: Computer Science - Bachelor's Degree Final Project
 Description: This program implements a Graphical User Interface (GUI) to solve
  the Capacitated Vertex Separator Problem (CVSP) on a graph through various
- formulations using unilevel and bilevel approaches.
+ formulations using integer optimization approaches.
 """
 
 import sys
@@ -31,8 +31,22 @@ WIN_WIDTH = 650
 WIN_HEIGHT = 630
 
 FORMULATIONS = {
-    "ortools": ["1", "2", "3", "4"],
-    "gurobi": ["1", "1 alt b", "1 alt c", "2", "3", "3 lazy", "4", "4 lazy"],
+    "ortools": [
+        "1",
+        "2",
+        "3",
+        "4",
+    ],
+    "gurobi": [
+        "1",
+        "1 alt b",
+        "1 alt c",
+        "2",
+        "3",
+        "3 lazy",
+        "4",
+        "4 lazy",
+    ],
 }
 
 FILENAME_LEN_THRESHOLD = 70
