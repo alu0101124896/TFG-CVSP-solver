@@ -18,6 +18,7 @@ from matplotlib.backends.backend_qt5agg import (FigureCanvasQTAgg as
                                                 NavigationToolbar2QT as
                                                 NavToolbar)
 import matplotlib.pyplot as plt
+import networkx as nx
 from PyQt5 import QtCore, QtWidgets
 
 try:
@@ -49,7 +50,8 @@ FORMULATIONS = {
     ],
 }
 
-FILENAME_LEN_THRESHOLD = 70
+GRAPH_FILENAME_LEN_THRESHOLD = 70
+SOLUTION_FILENAME_LEN_THRESHOLD = 64
 
 
 def main():
@@ -74,7 +76,7 @@ class UiMainWindow(object):
         self.horizontal_layout_0 = None
         self.graph_file_label = None
         self.load_graph_button = None
-        self.selected_file_label = None
+        self.selected_graph_file_label = None
 
         self.horizontal_layout_1 = None
         self.k_label = None
@@ -87,10 +89,15 @@ class UiMainWindow(object):
         self.formulation_selector = None
         self.get_solution_button = None
 
+        self.horizontal_layout_2 = None
+        self.save_solution_button = None
+        self.load_solution_button = None
+        self.selected_solution_file_label = None
+
         self.figure = None
         self.canvas = None
 
-        self.horizontal_layout_2 = None
+        self.horizontal_layout_3 = None
         self.status_label = None
         self.tool_bar = None
 
@@ -101,11 +108,11 @@ class UiMainWindow(object):
         self.spacer_item_2 = None
         self.spacer_item_3 = None
         self.spacer_item_4 = None
-        self.spacer_item_5 = None
-        self.spacer_item_6 = None
 
-        self.input_file = None
+        self.graph_file = None
         self.graph = None
+
+        self.solution_file = None
 
         self.available_formulations = FORMULATIONS
         self.available_libraries = FORMULATIONS.keys()
@@ -140,10 +147,11 @@ class UiMainWindow(object):
         self.load_graph_button.setText("Select file")
         self.horizontal_layout_0.addWidget(self.load_graph_button)
 
-        self.selected_file_label = QtWidgets.QLabel(self.central_widget)
-        self.selected_file_label.setObjectName("selected_file_label")
-        self.selected_file_label.setText("No file selected")
-        self.horizontal_layout_0.addWidget(self.selected_file_label)
+        self.selected_graph_file_label = QtWidgets.QLabel(self.central_widget)
+        self.selected_graph_file_label.setObjectName(
+            "selected_graph_file_label")
+        self.selected_graph_file_label.setText("No file selected")
+        self.horizontal_layout_0.addWidget(self.selected_graph_file_label)
 
         self.spacer_item_1 = QtWidgets.QSpacerItem(
             40,
@@ -210,13 +218,13 @@ class UiMainWindow(object):
             QtWidgets.QComboBox.AdjustToContents)
         self.horizontal_layout_1.addWidget(self.formulation_selector)
 
-        self.spacer_item_5 = QtWidgets.QSpacerItem(
+        self.spacer_item_2 = QtWidgets.QSpacerItem(
             40,
             20,
             QtWidgets.QSizePolicy.Expanding,
             QtWidgets.QSizePolicy.Minimum,
         )
-        self.horizontal_layout_1.addItem(self.spacer_item_5)
+        self.horizontal_layout_1.addItem(self.spacer_item_2)
 
         self.get_solution_button = QtWidgets.QPushButton(self.central_widget)
         self.get_solution_button.setObjectName("get_solution_button")
@@ -233,39 +241,81 @@ class UiMainWindow(object):
 
         # ---------------------------------------------------------------------
 
-        self.figure = plt.figure()
-        self.canvas = FigureCanvas(self.figure)
-        self.grid_layout.addWidget(self.canvas, 4, 0)
-
-        # ---------------------------------------------------------------------
-
         self.horizontal_layout_2 = QtWidgets.QHBoxLayout()
         self.horizontal_layout_2.setObjectName("horizontal_layout_2")
-        self.grid_layout.addLayout(self.horizontal_layout_2, 5, 0)
+        self.grid_layout.addLayout(self.horizontal_layout_2, 4, 0)
 
-        self.status_label = QtWidgets.QLabel(self.central_widget)
-        self.status_label.setObjectName("status_label")
-        self.status_label.setText("")
-        self.horizontal_layout_2.addWidget(self.status_label)
+        self.save_solution_button = QtWidgets.QPushButton(self.central_widget)
+        self.save_solution_button.setObjectName("save_solution_button")
+        self.save_solution_button.setText("Save solution")
+        self.horizontal_layout_2.addWidget(self.save_solution_button)
 
-        self.spacer_item_6 = QtWidgets.QSpacerItem(
+        self.load_solution_button = QtWidgets.QPushButton(self.central_widget)
+        self.load_solution_button.setObjectName("load_solution_button")
+        self.load_solution_button.setText("Load solution")
+        self.horizontal_layout_2.addWidget(self.load_solution_button)
+
+        self.selected_solution_file_label = QtWidgets.QLabel(
+            self.central_widget)
+        self.selected_solution_file_label.setObjectName(
+            "selected_solution_file_label")
+        self.selected_solution_file_label.setText("No file selected")
+        self.horizontal_layout_2.addWidget(self.selected_solution_file_label)
+
+        self.spacer_item_3 = QtWidgets.QSpacerItem(
             40,
             20,
             QtWidgets.QSizePolicy.Expanding,
             QtWidgets.QSizePolicy.Minimum,
         )
-        self.horizontal_layout_2.addItem(self.spacer_item_6)
+        self.horizontal_layout_2.addItem(self.spacer_item_3)
+
+        # ---------------------------------------------------------------------
+
+        self.line_2 = QtWidgets.QFrame(self.central_widget)
+        self.line_2.setObjectName("line_2")
+        self.line_2.setFrameShape(QtWidgets.QFrame.HLine)
+        self.line_2.setFrameShadow(QtWidgets.QFrame.Sunken)
+        self.grid_layout.addWidget(self.line_2, 5, 0)
+
+        # ---------------------------------------------------------------------
+
+        self.figure = plt.figure()
+        self.canvas = FigureCanvas(self.figure)
+        self.grid_layout.addWidget(self.canvas, 6, 0)
+
+        # ---------------------------------------------------------------------
+
+        self.horizontal_layout_3 = QtWidgets.QHBoxLayout()
+        self.horizontal_layout_3.setObjectName("horizontal_layout_3")
+        self.grid_layout.addLayout(self.horizontal_layout_3, 7, 0)
+
+        self.status_label = QtWidgets.QLabel(self.central_widget)
+        self.status_label.setObjectName("status_label")
+        self.status_label.setText("")
+        self.horizontal_layout_3.addWidget(self.status_label)
+
+        self.spacer_item_4 = QtWidgets.QSpacerItem(
+            40,
+            20,
+            QtWidgets.QSizePolicy.Expanding,
+            QtWidgets.QSizePolicy.Minimum,
+        )
+        self.horizontal_layout_3.addItem(self.spacer_item_4)
 
         self.tool_bar = NavToolbar(self.canvas,
                                    self.central_widget,
                                    coordinates=False)
         self.tool_bar.setFixedWidth(300)
-        self.horizontal_layout_2.addWidget(self.tool_bar)
+        self.horizontal_layout_3.addWidget(self.tool_bar)
 
         # ---------------------------------------------------------------------
 
         self.load_graph_button.clicked.connect(self.load_graph)
         self.get_solution_button.clicked.connect(self.get_solution)
+        self.save_solution_button.clicked.connect(self.save_solution)
+        self.load_solution_button.clicked.connect(self.load_solution)
+
         self.library_selector.currentIndexChanged["QString"].connect(
             self.update_formulation_selector)
 
@@ -276,30 +326,30 @@ class UiMainWindow(object):
 
         self.status_label.setText("Loading graph...")
 
-        input_file, check = QtWidgets.QFileDialog.getOpenFileName(
-            None, "Select graph file", "", "All Files (*)")
+        graph_file, check = QtWidgets.QFileDialog.getOpenFileName(
+            None, "Select a graph file", "", "All Files (*)")
 
         if not check:
             self.status_label.setText("Graph not loaded.")
 
         else:
-            self.set_input_file(input_file)
-            self.graph = Graph(self.input_file)
+            self.set_graph_file(graph_file)
+            self.graph = Graph(self.graph_file)
             self.show_graph()
 
             self.status_label.setText("Done.")
 
-    def set_input_file(self, input_file: str):
-        """ Function to set a new input file path. """
+    def set_graph_file(self, graph_file: str):
+        """ Function to set a new graph file path. """
 
-        self.input_file = input_file
+        self.graph_file = graph_file
 
-        if len(input_file) > FILENAME_LEN_THRESHOLD:
-            ipf_str = "..." + input_file[-FILENAME_LEN_THRESHOLD:]
+        if len(graph_file) > GRAPH_FILENAME_LEN_THRESHOLD:
+            file_str = "..." + graph_file[-GRAPH_FILENAME_LEN_THRESHOLD:]
         else:
-            ipf_str = input_file
+            file_str = graph_file
 
-        self.selected_file_label.setText(ipf_str)
+        self.selected_graph_file_label.setText(file_str)
 
     def update_formulation_selector(self, library_name: str):
         """ Function to update the available formulations for the selected
@@ -311,6 +361,10 @@ class UiMainWindow(object):
 
     def get_solution(self):
         """ Function to get the solution to the CVSP problem. """
+
+        self.graph.cvsp_solution = None
+        self.solution_file = None
+        self.selected_solution_file_label.setText("No file selected")
 
         if self.graph is None:
             self.status_label.setText("Please, load a graph first.")
@@ -334,6 +388,71 @@ class UiMainWindow(object):
                 self.status_label.setText("Solution not found.")
             else:
                 self.status_label.setText("Done.")
+
+    def save_solution(self):
+        """ Function to save the current solution to a file. """
+
+        if self.graph is None:
+            self.status_label.setText(
+                "Please, load a graph and get a solution first.")
+
+        elif self.graph.cvsp_solution is None:
+            self.status_label.setText("Please, get a solution first.")
+
+        else:
+            self.status_label.setText("Saving solution...")
+
+            solution_file, check = QtWidgets.QFileDialog.getSaveFileName(
+                None, "Select a destination file", "", "All Files (*)")
+
+            if not check:
+                self.status_label.setText("Solution file not loaded.")
+
+            else:
+                self.set_solution_file(solution_file)
+                self.graph.export_solution(self.solution_file)
+
+                self.status_label.setText("Done.")
+
+    def load_solution(self):
+        """ Function to load a saved solution from a file. """
+
+        if self.graph is None:
+            self.status_label.setText("Please, load a graph first.")
+
+        else:
+            self.status_label.setText("Loading solution...")
+
+            solution_file, check = QtWidgets.QFileDialog.getOpenFileName(
+                None, "Select a solution file", "", "All Files (*)")
+
+            if not check:
+                self.status_label.setText("Solution file not loaded.")
+
+            else:
+                try:
+                    self.set_solution_file(solution_file)
+                    self.graph.load_solution(self.solution_file)
+                    self.show_graph()
+
+                    self.status_label.setText("Done.")
+
+                except nx.exception.NetworkXError:
+                    self.status_label.setText(
+                        "Error: The solution file is not valid for this graph."
+                    )
+
+    def set_solution_file(self, solution_file: str):
+        """ Function to set a new input file path. """
+
+        self.solution_file = solution_file
+
+        if len(solution_file) > SOLUTION_FILENAME_LEN_THRESHOLD:
+            file_str = "..." + solution_file[-SOLUTION_FILENAME_LEN_THRESHOLD:]
+        else:
+            file_str = solution_file
+
+        self.selected_solution_file_label.setText(file_str)
 
     def show_graph(self):
         """ Function to show the loaded graph. """

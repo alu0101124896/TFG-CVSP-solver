@@ -58,7 +58,7 @@ class Graph:
 
         with open(Path(input_file), 'r', encoding="utf-8-sig") as file:
             raw_data = file.read()
-            self.parse_data(raw_data)
+            self.parse_graph_data(raw_data)
 
             if self.is_directed:
                 self.nx_graph = nx.DiGraph(self.edges_data)
@@ -73,7 +73,7 @@ class Graph:
                 sys.exit("Error: The graph's number of edges is not the same" +
                          " as on the data file.")
 
-    def parse_data(self, raw_data: str):
+    def parse_graph_data(self, raw_data: str):
         """ Function to parse a file's data into a list of edges """
 
         main_data, *edges_raw_data = raw_data.split("\n")
@@ -108,7 +108,9 @@ class Graph:
         """ Function to show the graph on the gui. """
 
         if self.cvsp_solution is None:
-            nx.draw_networkx(self.nx_graph, self.layout)
+            nx.draw_networkx(self.nx_graph,
+                             self.layout,
+                             node_color=REMAINING_SHORES_COLORS[9])
             return
 
         if isinstance(self.cvsp_solution, list):
@@ -160,6 +162,14 @@ class Graph:
 
         with open(Path(output_file), 'w', encoding="utf-8-sig") as outfile:
             print(*self.cvsp_solution, sep=", ", file=outfile)
+
+    def load_solution(self, input_file):
+        """ Function to export the solution to a file. """
+
+        with open(Path(input_file), 'r', encoding="utf-8-sig") as infile:
+            raw_data = infile.read()
+            solution_nodes = raw_data.split("\n")[0].split(", ")
+            self.cvsp_solution = solution_nodes
 
     def print_solution(self):
         """ Function to print the solution into the terminal in a more
