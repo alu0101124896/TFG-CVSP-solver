@@ -333,11 +333,17 @@ class UiMainWindow(object):
             self.status_label.setText("Graph not loaded.")
 
         else:
-            self.set_graph_file(graph_file)
-            self.graph = Graph(self.graph_file)
-            self.show_graph()
+            try:
+                self.set_graph_file(graph_file)
+                self.graph = Graph(self.graph_file)
+                self.show_graph()
 
-            self.status_label.setText("Done.")
+                self.status_label.setText("Done.")
+
+            except ValueError:
+                self.status_label.setText(
+                    "Error: The graph file is not valid."
+                )
 
     def set_graph_file(self, graph_file: str):
         """ Function to set a new graph file path. """
@@ -406,7 +412,7 @@ class UiMainWindow(object):
                 None, "Select a destination file", "", "All Files (*)")
 
             if not check:
-                self.status_label.setText("Solution file not loaded.")
+                self.status_label.setText("Solution file not saved.")
 
             else:
                 self.set_solution_file(solution_file)
