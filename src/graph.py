@@ -12,7 +12,6 @@ Description: This program provides the implementation of the Graph class used
 """
 
 from pathlib import Path
-import sys
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -36,7 +35,7 @@ class Graph:
             self.is_directed = False
 
             self.n_nodes = 50
-            self.n_edges = 100
+            self.n_edges = 75
             self.nx_graph = nx.gnm_random_graph(self.n_nodes,
                                                 self.n_edges,
                                                 directed=self.is_directed)
@@ -66,12 +65,12 @@ class Graph:
                 self.nx_graph = nx.Graph(self.edges_data)
 
             if self.nx_graph.number_of_nodes() != self.n_nodes:
-                sys.exit("Error: The graph's number of nodes is not the same" +
-                         " as on the data file.")
+                raise ValueError("The graph's number of nodes is not the" +
+                                 " same as on the data file.")
 
             if self.nx_graph.number_of_edges() != self.n_edges:
-                sys.exit("Error: The graph's number of edges is not the same" +
-                         " as on the data file.")
+                raise ValueError("The graph's number of edges is not the" +
+                                 " same as on the data file.")
 
     def parse_graph_data(self, raw_data: str):
         """ Function to parse a file's data into a list of edges """
@@ -143,7 +142,7 @@ class Graph:
                                  style=REMAINING_NODES_LINE_STYLE)
 
         else:
-            sys.exit("Error: unknown solution format")
+            raise TypeError("Unknown solution format.")
 
     def export_definition(self, output_file):
         """ Function to export the current graph definition to a file. """

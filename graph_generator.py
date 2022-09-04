@@ -16,6 +16,7 @@ try:
 except ImportError:
     from src.graph import Graph
 
+
 def main():
     """ Main function. """
 
@@ -25,6 +26,7 @@ def main():
 
     file_name = input("Graph file name: ")
     graph.export_definition(file_name)
+
 
 if __name__ == "__main__":
     main()
