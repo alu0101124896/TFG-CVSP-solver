@@ -1,4 +1,4 @@
-# Capacitated Vertex Separation Problem
+# Capacitated Vertex Separation Problem solver
 
 This program calculates the optimal solution to the Capacitated Vertex Separator Problem (CVSP) on a graph through various
  formulations using integer optimization approaches.
@@ -14,13 +14,13 @@ To get a local copy up and running follow these simple example steps.
 
 1. Clone this repo:
    ```sh
-   git clone https://github.com/alu0101124896/TFG-Capacitated-Vertex-Separator-Problem.git cvsp_package
+   git clone https://github.com/alu0101124896/TFG-CVSP-solver.git cvsp_solver
    ```
    Note: the name has been changed to be able to use it as a python package
 
 2. Move to the repo's main folder:
    ```sh
-   cd ./cvsp_package
+   cd ./cvsp_solver
    ```
 
 3. Install required packages:
@@ -89,10 +89,10 @@ For the execution of this program you have the following alternatives:
 
 * Import as a package:
    ```py
-   from cvsp_package import solve_cvsp
+   from cvsp_solver import solve_cvsp
 
    solve_cvsp(
-       input_file="./cvsp_package/data/graph1.txt",
+       input_file="./cvsp_solver/data/graph1.txt",
        output_file="./graph1-solution.txt",
        library_name="gurobi",
        formulation_index=1,
