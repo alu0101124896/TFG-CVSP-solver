@@ -13,6 +13,7 @@ Description: This program calculates the optimal solution to the Capacitated
 
 from itertools import combinations
 from math import inf
+from time import perf_counter
 
 from gurobipy import GRB, Model, StatusConstClass
 import networkx as nx
@@ -51,12 +52,20 @@ def cvsp_solver(graph: nx.Graph,
             formulation_4_lazy_gurobi,
         ],
     }
+
+    start_time = perf_counter()
+
     solution = formulations.get(library_name)[formulation_index](
         graph,
         k_value,
         b_value,
         quiet,
     )
+
+    end_time = perf_counter()
+
+    if not quiet:
+        print(f"Real elapsed time: {end_time-start_time} seconds")
 
     return solution
 
