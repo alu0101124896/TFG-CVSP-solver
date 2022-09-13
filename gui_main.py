@@ -182,6 +182,7 @@ class UiMainWindow(object):
 
         self.k_value = QtWidgets.QSpinBox(self.central_widget)
         self.k_value.setObjectName("k_value")
+        self.k_value.setRange(2, 999)
         self.k_value.setValue(3)
         self.horizontal_layout_1.addWidget(self.k_value)
 
@@ -192,6 +193,7 @@ class UiMainWindow(object):
 
         self.b_value = QtWidgets.QSpinBox(self.central_widget)
         self.b_value.setObjectName("b_value")
+        self.b_value.setRange(1, 999)
         self.b_value.setValue(3)
         self.horizontal_layout_1.addWidget(self.b_value)
 
