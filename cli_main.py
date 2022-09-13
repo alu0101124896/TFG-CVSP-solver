@@ -188,11 +188,11 @@ def solve_cvsp(input_file: str = None,
         elif not quiet:
             graph.print_solution()
 
+        if output_file is not None:
+            graph.export_solution(output_file)
+
     elif not quiet:
         print("Solution not found")
-
-    if output_file is not None:
-        graph.export_solution(output_file)
 
 
 if __name__ == "__main__":
