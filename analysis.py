@@ -56,6 +56,7 @@ def main():
                             f"  K value: {k_value}",
                             f"  B value: {b_value}",
                             sep="\n",
+                            flush=True,
                         )
 
                         graph.solve_cvsp(
